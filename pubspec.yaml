@@ -1,0 +1,24 @@
+name: cramp4
+description: "A video compression and encoding tool."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  file_picker: ^11.0.2
+  shared_preferences: ^2.3.2
+  google_fonts: ^6.2.1
+  desktop_drop: ^0.4.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
