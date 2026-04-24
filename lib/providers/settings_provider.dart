@@ -8,12 +8,8 @@ class SettingsProvider extends ChangeNotifier {
   static const _keyOutputDir = 'output_dir';
   static const _keyOutputPrefix = 'output_prefix';
   static const _keyOutputSuffix = 'output_suffix';
-  static const _videoExtensions = [
-    'mp4', 'mkv', 'avi', 'mov', 'wmv', 'webm', 'm4v', 'flv',
-    'ts', 'm2ts', 'mpg', 'mpeg', '3gp', 'ogv', 'vob',
-  ];
-  static String _extKey(String ext) =>
-      'HKCU\\Software\\Classes\\.$ext\\shell\\OpenInCramp4';
+  static const _shellKey =
+      r'HKCU\Software\Classes\*\shell\OpenInCramp4';
 
   String _ffmpegPath = '';
   String _outputDir = '';
@@ -49,43 +45,37 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> _checkContextMenuStatus() async {
-    // Check the first extension as a proxy for all
-    final result = await Process.run('reg', ['query', _extKey('mp4')]);
+    final result = await Process.run('reg', ['query', _shellKey]);
     _contextMenuRegistered = result.exitCode == 0;
   }
 
   Future<bool> registerContextMenu() async {
     final exe = Platform.resolvedExecutable;
-    bool ok = true;
-    for (final ext in _videoExtensions) {
-      final key = _extKey(ext);
-      final r1 = await Process.run('reg', [
-        'add', key, '/ve', '/d', 'Open in cramp4', '/f',
-      ]);
-      await Process.run('reg', [
-        'add', key, '/v', 'Icon', '/d', '"$exe",0', '/f',
-      ]);
-      final r2 = await Process.run('reg', [
-        'add', '$key\\command', '/ve', '/d', '"$exe" "%1"', '/f',
-      ]);
-      if (r1.exitCode != 0 || r2.exitCode != 0) ok = false;
-    }
+    final r1 = await Process.run('reg', [
+      'add', _shellKey, '/ve', '/d', 'Open in cramp4', '/f',
+    ]);
+    await Process.run('reg', [
+      'add', _shellKey, '/v', 'Icon', '/d', '"$exe",0', '/f',
+    ]);
+    // AppliesTo limits the entry to video files only
+    await Process.run('reg', [
+      'add', _shellKey, '/v', 'AppliesTo', '/d', 'System.Kind:=video', '/f',
+    ]);
+    final r2 = await Process.run('reg', [
+      'add', '$_shellKey\\command', '/ve', '/d', '"$exe" "%1"', '/f',
+    ]);
     await _notifyShell();
-    _contextMenuRegistered = ok;
+    _contextMenuRegistered = r1.exitCode == 0 && r2.exitCode == 0;
     notifyListeners();
-    return ok;
+    return _contextMenuRegistered;
   }
 
   Future<bool> unregisterContextMenu() async {
-    bool ok = true;
-    for (final ext in _videoExtensions) {
-      final result = await Process.run('reg', ['delete', _extKey(ext), '/f']);
-      if (result.exitCode != 0) ok = false;
-    }
+    final result = await Process.run('reg', ['delete', _shellKey, '/f']);
     await _notifyShell();
-    if (ok) _contextMenuRegistered = false;
+    if (result.exitCode == 0) _contextMenuRegistered = false;
     notifyListeners();
-    return ok;
+    return result.exitCode == 0;
   }
 
   Future<void> _notifyShell() async {
