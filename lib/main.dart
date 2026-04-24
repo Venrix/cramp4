@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,16 +15,22 @@ import 'widgets/bottom_action_bar.dart';
 import 'widgets/drop_zone.dart';
 import 'widgets/info_bar.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   final settingsProvider = SettingsProvider();
   await settingsProvider.init();
+
+  final appState = AppStateProvider();
+  if (args.isNotEmpty) {
+    // Launched from context menu — load the file immediately
+    unawaited(appState.loadFile(args.first, settingsProvider.effectiveFfprobePath));
+  }
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
-        ChangeNotifierProvider<AppStateProvider>(create: (_) => AppStateProvider()),
+        ChangeNotifierProvider<AppStateProvider>.value(value: appState),
         ChangeNotifierProvider<EncodingProvider>(create: (_) => EncodingProvider()),
       ],
       child: const CrampApp(),

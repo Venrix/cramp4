@@ -16,6 +16,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _ffmpegController;
   late TextEditingController _outputDirController;
+  late TextEditingController _prefixController;
   late TextEditingController _suffixController;
 
   @override
@@ -24,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.read<SettingsProvider>();
     _ffmpegController = TextEditingController(text: settings.ffmpegPath);
     _outputDirController = TextEditingController(text: settings.outputDir);
+    _prefixController = TextEditingController(text: settings.outputPrefix);
     _suffixController = TextEditingController(text: settings.outputSuffix);
   }
 
@@ -31,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _ffmpegController.dispose();
     _outputDirController.dispose();
+    _prefixController.dispose();
     _suffixController.dispose();
     super.dispose();
   }
@@ -120,16 +123,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _fieldLabel('Output Filename Suffix'),
-                const SizedBox(height: 6),
-                HoverTextField(
-                  controller: _suffixController,
-                  decoration: const InputDecoration(
-                    hintText: '_cramp4',
-                  ),
-                  onChanged: settings.setOutputSuffix,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _fieldLabel('Output Filename Prefix'),
+                          const SizedBox(height: 6),
+                          HoverTextField(
+                            controller: _prefixController,
+                            decoration: const InputDecoration(
+                              hintText: 'None',
+                            ),
+                            onChanged: settings.setOutputPrefix,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _fieldLabel('Output Filename Suffix'),
+                          const SizedBox(height: 6),
+                          HoverTextField(
+                            controller: _suffixController,
+                            decoration: const InputDecoration(
+                              hintText: '_cramp4',
+                            ),
+                            onChanged: settings.setOutputSuffix,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Shell Integration card
+        Consumer<SettingsProvider>(
+          builder: (context, settings, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _cardHeader(Icons.mouse_outlined, 'Shell Integration'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '"Open in cramp4" context menu',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Adds right-click menu entry for video files.',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      OutlinedButton(
+                        onPressed: () async {
+                          if (settings.contextMenuRegistered) {
+                            await settings.unregisterContextMenu();
+                          } else {
+                            await settings.registerContextMenu();
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: settings.contextMenuRegistered
+                              ? AppTheme.textSecondary
+                              : AppTheme.accent,
+                          side: BorderSide(
+                            color: settings.contextMenuRegistered
+                                ? AppTheme.textSecondary
+                                : AppTheme.accent,
+                          ),
+                        ),
+                        child: Text(
+                          settings.contextMenuRegistered ? 'Remove' : 'Add',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

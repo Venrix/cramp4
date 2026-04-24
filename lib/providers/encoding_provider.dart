@@ -33,6 +33,7 @@ class EncodingProvider extends ChangeNotifier {
     final outputPath = ffmpegSvc.buildOutputPath(
       inputPath: fileInfo.path,
       outputDir: settingsConfig.outputDir,
+      prefix: settingsConfig.outputPrefix,
       suffix: settingsConfig.outputSuffix,
       settings: settings,
     );

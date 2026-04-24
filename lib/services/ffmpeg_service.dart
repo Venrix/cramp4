@@ -121,6 +121,7 @@ class FfmpegService {
   String buildOutputPath({
     required String inputPath,
     required String outputDir,
+    required String prefix,
     required String suffix,
     required EncodeSettings settings,
   }) {
@@ -134,7 +135,7 @@ class FfmpegService {
         : filename;
     final dir = outputDir.isEmpty ? inputDir : outputDir.replaceAll('\\', '/');
     final ext = settings.videoEnabled ? 'mp4' : settings.audioFormat.extension;
-    return '$dir/$stem$suffix.$ext';
+    return '$dir/$prefix$stem$suffix.$ext';
   }
 
   String buildPasslogPath(String outputDir, String inputPath) {
