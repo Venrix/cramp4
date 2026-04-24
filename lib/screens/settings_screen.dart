@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.read<SettingsProvider>();
 
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       children: [
         // FFmpeg card
         Card(
