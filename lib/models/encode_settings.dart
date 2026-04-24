@@ -126,10 +126,10 @@ class EncodeSettings {
   EncodeSettings({
     this.videoEnabled = true,
     this.targetSizeMB,
-    this.videoCodec = VideoCodec.h264,
+    this.videoCodec = VideoCodec.copy,
     this.resolutionScale = ResolutionScale.original,
     this.audioEnabled = true,
     this.audioBitrateKbps = 128,
-    this.audioFormat = AudioFormat.aac,
+    this.audioFormat = AudioFormat.copy,
   });
 }
