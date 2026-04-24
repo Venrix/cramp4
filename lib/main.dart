@@ -21,6 +21,7 @@ void main(List<String> args) async {
   await settingsProvider.init();
 
   final appState = AppStateProvider();
+  await appState.init();
   if (args.isNotEmpty) {
     // Launched from context menu — load the file immediately
     unawaited(appState.loadFile(args.first, settingsProvider.effectiveFfprobePath));

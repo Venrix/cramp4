@@ -1,11 +1,20 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/encode_settings.dart';
 import '../models/file_info.dart';
 import '../services/ffprobe_service.dart';
 
 class AppStateProvider extends ChangeNotifier {
+  static const _keyVideoEnabled = 'enc_video_enabled';
+  static const _keyVideoCodec = 'enc_video_codec';
+  static const _keyResolutionScale = 'enc_resolution_scale';
+  static const _keyTargetSizeMB = 'enc_target_size_mb';
+  static const _keyAudioEnabled = 'enc_audio_enabled';
+  static const _keyAudioFormat = 'enc_audio_format';
+  static const _keyAudioBitrate = 'enc_audio_bitrate';
+
   int _tabIndex = 0;
   FileInfo? _fileInfo;
   final EncodeSettings _settings = EncodeSettings();
@@ -17,6 +26,37 @@ class AppStateProvider extends ChangeNotifier {
   EncodeSettings get settings => _settings;
   bool get isLoadingFile => _isLoadingFile;
   String? get fileError => _fileError;
+
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    _settings.videoEnabled = prefs.getBool(_keyVideoEnabled) ?? true;
+    _settings.videoCodec = VideoCodec.values.byName(
+        prefs.getString(_keyVideoCodec) ?? VideoCodec.copy.name);
+    _settings.resolutionScale = ResolutionScale.values.byName(
+        prefs.getString(_keyResolutionScale) ?? ResolutionScale.original.name);
+    final targetSize = prefs.getDouble(_keyTargetSizeMB);
+    _settings.targetSizeMB = targetSize;
+    _settings.audioEnabled = prefs.getBool(_keyAudioEnabled) ?? true;
+    _settings.audioFormat = AudioFormat.values.byName(
+        prefs.getString(_keyAudioFormat) ?? AudioFormat.copy.name);
+    _settings.audioBitrateKbps = prefs.getInt(_keyAudioBitrate) ?? 128;
+    notifyListeners();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyVideoEnabled, _settings.videoEnabled);
+    await prefs.setString(_keyVideoCodec, _settings.videoCodec.name);
+    await prefs.setString(_keyResolutionScale, _settings.resolutionScale.name);
+    if (_settings.targetSizeMB != null) {
+      await prefs.setDouble(_keyTargetSizeMB, _settings.targetSizeMB!);
+    } else {
+      await prefs.remove(_keyTargetSizeMB);
+    }
+    await prefs.setBool(_keyAudioEnabled, _settings.audioEnabled);
+    await prefs.setString(_keyAudioFormat, _settings.audioFormat.name);
+    await prefs.setInt(_keyAudioBitrate, _settings.audioBitrateKbps);
+  }
 
   void setTab(int index) {
     _tabIndex = index;
@@ -69,35 +109,42 @@ class AppStateProvider extends ChangeNotifier {
   void setVideoEnabled(bool v) {
     _settings.videoEnabled = v;
     notifyListeners();
+    _save();
   }
 
   void setTargetSizeMB(double? v) {
     _settings.targetSizeMB = v;
     notifyListeners();
+    _save();
   }
 
   void setVideoCodec(VideoCodec v) {
     _settings.videoCodec = v;
     notifyListeners();
+    _save();
   }
 
   void setResolutionScale(ResolutionScale v) {
     _settings.resolutionScale = v;
     notifyListeners();
+    _save();
   }
 
   void setAudioEnabled(bool v) {
     _settings.audioEnabled = v;
     notifyListeners();
+    _save();
   }
 
   void setAudioBitrateKbps(int v) {
     _settings.audioBitrateKbps = v;
     notifyListeners();
+    _save();
   }
 
   void setAudioFormat(AudioFormat v) {
     _settings.audioFormat = v;
     notifyListeners();
+    _save();
   }
 }
