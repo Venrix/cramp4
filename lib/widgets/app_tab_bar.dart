@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_state_provider.dart';
 import '../theme/app_theme.dart';
 
-class AppTabBar extends StatelessWidget {
+class AppTabBar extends StatefulWidget {
   const AppTabBar({super.key});
+
+  @override
+  State<AppTabBar> createState() => _AppTabBarState();
+}
+
+class _AppTabBarState extends State<AppTabBar> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = 'v${info.version}');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +63,15 @@ class AppTabBar extends StatelessWidget {
             index: 2,
             current: tabIndex,
           ),
+          const Spacer(),
+          if (_version.isNotEmpty)
+            Text(
+              _version,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+              ),
+            ),
         ],
       ),
     );
