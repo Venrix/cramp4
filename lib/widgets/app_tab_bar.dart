@@ -13,13 +13,15 @@ class AppTabBar extends StatefulWidget {
 }
 
 class _AppTabBarState extends State<AppTabBar> {
-  String _version = '';
+  String _version = 'dev';
 
   @override
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = 'v${info.version}');
+      if (mounted && info.version != '0.0.0') {
+        setState(() => _version = 'v${info.version}');
+      }
     });
   }
 
@@ -64,14 +66,13 @@ class _AppTabBarState extends State<AppTabBar> {
             current: tabIndex,
           ),
           const Spacer(),
-          if (_version.isNotEmpty)
-            Text(
-              _version,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-              ),
+          Text(
+            _version,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 11,
             ),
+          ),
         ],
       ),
     );
