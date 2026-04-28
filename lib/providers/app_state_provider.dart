@@ -20,12 +20,16 @@ class AppStateProvider extends ChangeNotifier {
   final EncodeSettings _settings = EncodeSettings();
   bool _isLoadingFile = false;
   String? _fileError;
+  Duration _trimStart = Duration.zero;
+  Duration _trimEnd = Duration.zero;
 
   int get tabIndex => _tabIndex;
   FileInfo? get fileInfo => _fileInfo;
   EncodeSettings get settings => _settings;
   bool get isLoadingFile => _isLoadingFile;
   String? get fileError => _fileError;
+  Duration get trimStart => _trimStart;
+  Duration get trimEnd => _trimEnd;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -104,6 +108,19 @@ class AppStateProvider extends ChangeNotifier {
 
     final bitrate = nearestAudioBitrate(info.audioBitrate ~/ 1000);
     if (bitrate != null) _settings.audioBitrateKbps = bitrate;
+
+    _trimStart = Duration.zero;
+    _trimEnd = info.duration;
+  }
+
+  void setTrimStart(Duration d) {
+    _trimStart = d;
+    notifyListeners();
+  }
+
+  void setTrimEnd(Duration d) {
+    _trimEnd = d;
+    notifyListeners();
   }
 
   void setVideoEnabled(bool v) {

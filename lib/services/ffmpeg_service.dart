@@ -24,10 +24,14 @@ class FfmpegService {
     required EncodeSettings settings,
     required int videoBitrateKbps,
     required String passlogFile,
+    Duration trimStart = Duration.zero,
+    Duration? trimDuration,
   }) {
     return [
       '-y',
       '-i', inputPath,
+      if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
+      if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
@@ -46,10 +50,14 @@ class FfmpegService {
     required int videoBitrateKbps,
     required String passlogFile,
     required FileInfo fileInfo,
+    Duration trimStart = Duration.zero,
+    Duration? trimDuration,
   }) {
     return [
       '-y',
       '-i', inputPath,
+      if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
+      if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
@@ -64,10 +72,14 @@ class FfmpegService {
     required String inputPath,
     required String outputPath,
     required EncodeSettings settings,
+    Duration trimStart = Duration.zero,
+    Duration? trimDuration,
   }) {
     return [
       '-y',
       '-i', inputPath,
+      if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
+      if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
       if (settings.videoEnabled) ...[
         ..._videoFilterArgs(settings),
         '-c:v', settings.videoCodec.ffmpegCodec,
@@ -79,6 +91,9 @@ class FfmpegService {
       outputPath,
     ];
   }
+
+  static String _fmtSecs(Duration d) =>
+      (d.inMilliseconds / 1000.0).toStringAsFixed(3);
 
   List<String> _videoFilterArgs(EncodeSettings settings) {
     final filter = settings.resolutionScale.scaleFilter;

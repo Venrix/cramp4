@@ -26,8 +26,15 @@ class EncodingProvider extends ChangeNotifier {
     required FileInfo fileInfo,
     required EncodeSettings settings,
     required SettingsProvider settingsConfig,
+    required Duration trimStart,
+    required Duration trimEnd,
   }) async {
     if (isEncoding) return;
+
+    final trimDuration = trimEnd - trimStart;
+    final effectiveDurationSecs = trimDuration.inMilliseconds > 0
+        ? trimDuration.inMilliseconds / 1000.0
+        : fileInfo.durationSeconds;
 
     final ffmpegSvc = FfmpegService(ffmpegPath: settingsConfig.effectiveFfmpegPath);
     final outputPath = ffmpegSvc.buildOutputPath(
@@ -55,9 +62,11 @@ class EncodingProvider extends ChangeNotifier {
           settings.videoCodec.supportsTwoPass;
 
       if (useTargetSize) {
-        await _runTwoPass(fileInfo, settings, settingsConfig, outputPath, ffmpegSvc);
+        await _runTwoPass(fileInfo, settings, settingsConfig, outputPath, ffmpegSvc,
+            trimStart, trimDuration, effectiveDurationSecs);
       } else {
-        await _runSinglePass(fileInfo, settings, settingsConfig, outputPath, ffmpegSvc);
+        await _runSinglePass(fileInfo, settings, outputPath, ffmpegSvc,
+            trimStart, trimDuration, effectiveDurationSecs);
       }
     } catch (e) {
       if (_currentJob?.status != JobStatus.aborted) {
@@ -73,14 +82,18 @@ class EncodingProvider extends ChangeNotifier {
   Future<void> _runSinglePass(
     FileInfo fileInfo,
     EncodeSettings settings,
-    SettingsProvider settingsConfig,
     String outputPath,
     FfmpegService ffmpegSvc,
+    Duration trimStart,
+    Duration trimDuration,
+    double effectiveDurationSecs,
   ) async {
     final args = ffmpegSvc.buildSinglePassArgs(
       inputPath: fileInfo.path,
       outputPath: outputPath,
       settings: settings,
+      trimStart: trimStart,
+      trimDuration: trimDuration,
     );
 
     _currentJob = _currentJob!.copyWith(
@@ -89,9 +102,10 @@ class EncodingProvider extends ChangeNotifier {
     );
     notifyListeners();
 
-    await _runProcess(args, fileInfo.durationSeconds, 0.0, 1.0, ffmpegSvc);
+    await _runProcess(args, effectiveDurationSecs, 0.0, 1.0, ffmpegSvc);
 
     if (_currentJob?.status != JobStatus.aborted) {
+      await _copyFileTimestamps(fileInfo.path, outputPath);
       _currentJob = _currentJob?.copyWith(status: JobStatus.done, progress: 1.0);
       notifyListeners();
     }
@@ -103,11 +117,14 @@ class EncodingProvider extends ChangeNotifier {
     SettingsProvider settingsConfig,
     String outputPath,
     FfmpegService ffmpegSvc,
+    Duration trimStart,
+    Duration trimDuration,
+    double effectiveDurationSecs,
   ) async {
     final passlogFile = ffmpegSvc.buildPasslogPath(settingsConfig.outputDir, fileInfo.path);
     final videoBitrate = ffmpegSvc.calculateVideoBitrateKbps(
       targetSizeMB: settings.targetSizeMB!,
-      durationSeconds: fileInfo.durationSeconds,
+      durationSeconds: effectiveDurationSecs,
       audioBitrateKbps: settings.audioEnabled ? settings.audioBitrateKbps : 0,
     );
 
@@ -117,6 +134,8 @@ class EncodingProvider extends ChangeNotifier {
       settings: settings,
       videoBitrateKbps: videoBitrate,
       passlogFile: passlogFile,
+      trimStart: trimStart,
+      trimDuration: trimDuration,
     );
     _currentJob = _currentJob!.copyWith(
       status: JobStatus.pass1,
@@ -124,7 +143,7 @@ class EncodingProvider extends ChangeNotifier {
     );
     notifyListeners();
 
-    await _runProcess(pass1Args, fileInfo.durationSeconds, 0.0, 0.5, ffmpegSvc);
+    await _runProcess(pass1Args, effectiveDurationSecs, 0.0, 0.5, ffmpegSvc);
     if (_currentJob?.status == JobStatus.aborted) {
       _cleanPasslogs(passlogFile);
       return;
@@ -138,6 +157,8 @@ class EncodingProvider extends ChangeNotifier {
       videoBitrateKbps: videoBitrate,
       passlogFile: passlogFile,
       fileInfo: fileInfo,
+      trimStart: trimStart,
+      trimDuration: trimDuration,
     );
     _currentJob = _currentJob!.copyWith(
       status: JobStatus.pass2,
@@ -145,10 +166,11 @@ class EncodingProvider extends ChangeNotifier {
     );
     notifyListeners();
 
-    await _runProcess(pass2Args, fileInfo.durationSeconds, 0.5, 1.0, ffmpegSvc);
+    await _runProcess(pass2Args, effectiveDurationSecs, 0.5, 1.0, ffmpegSvc);
     _cleanPasslogs(passlogFile);
 
     if (_currentJob?.status != JobStatus.aborted) {
+      await _copyFileTimestamps(fileInfo.path, outputPath);
       _currentJob = _currentJob?.copyWith(status: JobStatus.done, progress: 1.0);
       notifyListeners();
     }
@@ -218,6 +240,20 @@ class EncodingProvider extends ChangeNotifier {
 
     _currentJob = _currentJob?.copyWith(status: JobStatus.aborted);
     notifyListeners();
+  }
+
+  Future<void> _copyFileTimestamps(String inputPath, String outputPath) async {
+    try {
+      final src = inputPath.replaceAll("'", "''");
+      final dst = outputPath.replaceAll("'", "''");
+      await Process.run('powershell', [
+        '-NoProfile', '-NonInteractive', '-Command',
+        "\$s=Get-Item -LiteralPath '$src';"
+        "\$d=Get-Item -LiteralPath '$dst';"
+        "\$d.CreationTime=\$s.CreationTime;"
+        "\$d.LastWriteTime=\$s.LastWriteTime",
+      ]);
+    } catch (_) {}
   }
 
   void _cleanPasslogs(String passlogFile) {

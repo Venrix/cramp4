@@ -41,7 +41,10 @@ class BottomActionBar extends StatelessWidget {
                     // Warn if target size too small
                     final targetMB = appState.settings.targetSizeMB;
                     if (targetMB != null && targetMB > 0) {
-                      final durationSecs = fileInfo.durationSeconds;
+                      final trimDuration = appState.trimEnd - appState.trimStart;
+                      final durationSecs = trimDuration.inMilliseconds > 0
+                          ? trimDuration.inMilliseconds / 1000.0
+                          : fileInfo.durationSeconds;
                       final audioBitrate = appState.settings.audioEnabled ? appState.settings.audioBitrateKbps : 0;
                       final videoBitrateKbps = ((targetMB * 8 * 1024) / durationSecs) - audioBitrate;
                       if (videoBitrateKbps < 50) {
@@ -59,6 +62,8 @@ class BottomActionBar extends StatelessWidget {
                       fileInfo: fileInfo,
                       settings: appState.settings,
                       settingsConfig: settings,
+                      trimStart: appState.trimStart,
+                      trimEnd: appState.trimEnd,
                     );
                   }
                 : null,

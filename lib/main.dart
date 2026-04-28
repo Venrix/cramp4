@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/app_state_provider.dart';
@@ -17,6 +18,7 @@ import 'widgets/info_bar.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   final settingsProvider = SettingsProvider();
   await settingsProvider.init();
 
