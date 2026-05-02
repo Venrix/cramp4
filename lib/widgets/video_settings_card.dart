@@ -18,6 +18,8 @@ class VideoSettingsCard extends StatelessWidget {
     final videoOn = settings.videoEnabled;
 
     final originalCodec = videoCodecFromFfprobe(appState.fileInfo?.videoCodec);
+    final isAv1 = settings.videoCodec == VideoCodec.av1 ||
+        (settings.videoCodec == VideoCodec.copy && originalCodec == VideoCodec.av1);
 
     // Parse source height from "WxH" string
     final resolution = appState.fileInfo?.resolution;
@@ -74,9 +76,7 @@ class VideoSettingsCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _fieldLabel('TARGET FILE SIZE'),
-                    const SizedBox(height: 6),
-                    _TargetSizeField(settings: settings, appState: appState),
+                    _targetSizeSection(settings, appState, isAv1),
                     const SizedBox(height: 14),
                     _fieldLabel('CODEC'),
                     const SizedBox(height: 6),
@@ -106,6 +106,32 @@ class VideoSettingsCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _targetSizeSection(
+      EncodeSettings settings, AppStateProvider appState, bool isAv1) {
+    Widget content = IgnorePointer(
+      ignoring: isAv1,
+      child: AnimatedOpacity(
+        opacity: isAv1 ? 0.35 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _fieldLabel('TARGET FILE SIZE'),
+            const SizedBox(height: 6),
+            _TargetSizeField(settings: settings, appState: appState),
+          ],
+        ),
+      ),
+    );
+    if (isAv1) {
+      content = Tooltip(
+        message: 'AV1 (SVT-AV1) uses single-pass CRF only — target size not supported',
+        child: content,
+      );
+    }
+    return content;
   }
 
   Widget _fieldLabel(String text) => Text(
