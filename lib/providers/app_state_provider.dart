@@ -1,10 +1,22 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/encode_settings.dart';
 import '../models/file_info.dart';
+import '../providers/settings_provider.dart';
 import '../services/ffprobe_service.dart';
+
+const _videoExtensions = {'.mp4', '.mkv', '.mov', '.avi', '.wmv', '.webm', '.m4v'};
+
+DateTime _fileSortDate(String path, FolderSortField field) {
+  final f = File(path);
+  if (field == FolderSortField.dateModified) return f.lastModifiedSync();
+  // dateCreated: FileStat.changed maps to creation time on Windows
+  return f.statSync().changed;
+}
 
 class AppStateProvider extends ChangeNotifier {
   static const _keyVideoEnabled = 'enc_video_enabled';
@@ -22,6 +34,9 @@ class AppStateProvider extends ChangeNotifier {
   String? _fileError;
   Duration _trimStart = Duration.zero;
   Duration _trimEnd = Duration.zero;
+  List<String> _folderFiles = [];
+  int _folderIndex = -1;
+  String? _folderPath;
 
   int get tabIndex => _tabIndex;
   FileInfo? get fileInfo => _fileInfo;
@@ -30,6 +45,10 @@ class AppStateProvider extends ChangeNotifier {
   String? get fileError => _fileError;
   Duration get trimStart => _trimStart;
   Duration get trimEnd => _trimEnd;
+  bool get hasFolderLoaded => _folderFiles.isNotEmpty;
+  int get folderIndex => _folderIndex;
+  int get folderTotal => _folderFiles.length;
+  String? get folderPath => _folderPath;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -67,7 +86,14 @@ class AppStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _clearFolderState() {
+    _folderFiles = [];
+    _folderIndex = -1;
+    _folderPath = null;
+  }
+
   Future<void> pickFile(String ffprobePath) async {
+    _clearFolderState();
     final result = await FilePicker.pickFiles(
       type: FileType.video,
       allowMultiple: false,
@@ -78,8 +104,118 @@ class AppStateProvider extends ChangeNotifier {
     await _probeFile(path, ffprobePath);
   }
 
-  Future<void> loadFile(String path, String ffprobePath) =>
-      _probeFile(path, ffprobePath);
+  Future<void> loadFile(String path, String ffprobePath) {
+    _clearFolderState();
+    return _probeFile(path, ffprobePath);
+  }
+
+  Future<void> pickFolder(
+    String ffprobePath, {
+    required FolderSortField sortField,
+    required FolderSortDirection sortDirection,
+    required String blacklistPattern,
+  }) async {
+    final dir = await FilePicker.getDirectoryPath();
+    if (dir == null) return;
+    await _loadFolder(dir, ffprobePath,
+        sortField: sortField,
+        sortDirection: sortDirection,
+        blacklistPattern: blacklistPattern);
+  }
+
+  Future<void> _loadFolder(
+    String dirPath,
+    String ffprobePath, {
+    required FolderSortField sortField,
+    required FolderSortDirection sortDirection,
+    required String blacklistPattern,
+  }) async {
+    _isLoadingFile = true;
+    _fileError = null;
+    notifyListeners();
+
+    try {
+      final allEntries = await Directory(dirPath).list(recursive: false).toList();
+
+      final videoFiles = allEntries
+          .whereType<File>()
+          .where((f) {
+            final ext = f.path.contains('.')
+                ? '.${f.path.split('.').last.toLowerCase()}'
+                : '';
+            return _videoExtensions.contains(ext);
+          })
+          .map((f) => f.path)
+          .toList();
+
+      List<String> filtered = videoFiles;
+      if (blacklistPattern.isNotEmpty) {
+        try {
+          final regex = RegExp(blacklistPattern);
+          filtered = videoFiles.where((p) {
+            final filename = p.replaceAll('\\', '/').split('/').last;
+            return !regex.hasMatch(filename);
+          }).toList();
+        } catch (_) {
+          // Invalid regex — skip filtering
+        }
+      }
+
+      if (filtered.isEmpty) {
+        _folderFiles = [];
+        _folderIndex = -1;
+        _folderPath = dirPath;
+        _fileError = 'No video files found in folder';
+        _isLoadingFile = false;
+        notifyListeners();
+        return;
+      }
+
+      if (sortField == FolderSortField.title) {
+        filtered.sort((a, b) {
+          final nameA = a.replaceAll('\\', '/').split('/').last.toLowerCase();
+          final nameB = b.replaceAll('\\', '/').split('/').last.toLowerCase();
+          return sortDirection == FolderSortDirection.ascending
+              ? nameA.compareTo(nameB)
+              : nameB.compareTo(nameA);
+        });
+      } else {
+        filtered.sort((a, b) {
+          final dateA = _fileSortDate(a, sortField);
+          final dateB = _fileSortDate(b, sortField);
+          return sortDirection == FolderSortDirection.ascending
+              ? dateA.compareTo(dateB)
+              : dateB.compareTo(dateA);
+        });
+      }
+
+      _folderFiles = filtered;
+      _folderPath = dirPath;
+      _folderIndex = 0;
+    } catch (e) {
+      _fileError = e.toString();
+      _folderFiles = [];
+      _folderIndex = -1;
+      _isLoadingFile = false;
+      notifyListeners();
+      return;
+    }
+
+    await _probeFile(_folderFiles[0], ffprobePath);
+    // _isLoadingFile reset by _probeFile's finally block
+  }
+
+  Future<void> navigateFolderPrev(String ffprobePath) async {
+    if (_isLoadingFile || _folderIndex <= 0) return;
+    _folderIndex--;
+    await _probeFile(_folderFiles[_folderIndex], ffprobePath);
+  }
+
+  Future<void> navigateFolderNext(String ffprobePath) async {
+    if (_isLoadingFile || _folderIndex >= _folderFiles.length - 1) return;
+    _folderIndex++;
+    await _probeFile(_folderFiles[_folderIndex], ffprobePath);
+  }
 
   Future<void> _probeFile(String path, String ffprobePath) async {
     _isLoadingFile = true;

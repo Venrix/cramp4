@@ -3,11 +3,17 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum FolderSortField { dateCreated, dateModified, title }
+enum FolderSortDirection { ascending, descending }
+
 class SettingsProvider extends ChangeNotifier {
   static const _keyFfmpegPath = 'ffmpeg_path';
   static const _keyOutputDir = 'output_dir';
   static const _keyOutputPrefix = 'output_prefix';
   static const _keyOutputSuffix = 'output_suffix';
+  static const _keyFolderSortField = 'folder_sort_field';
+  static const _keyFolderSortDirection = 'folder_sort_direction';
+  static const _keyBlacklistPattern = 'folder_blacklist_pattern';
   static const _shellKey =
       r'HKCU\Software\Classes\*\shell\OpenInCramp4';
 
@@ -16,12 +22,18 @@ class SettingsProvider extends ChangeNotifier {
   String _outputPrefix = '';
   String _outputSuffix = '_cramp4';
   bool _contextMenuRegistered = false;
+  FolderSortField _folderSortField = FolderSortField.dateCreated;
+  FolderSortDirection _folderSortDirection = FolderSortDirection.ascending;
+  String _blacklistPattern = r'_cramp4';
 
   String get ffmpegPath => _ffmpegPath;
   String get outputDir => _outputDir;
   String get outputPrefix => _outputPrefix;
   String get outputSuffix => _outputSuffix;
   bool get contextMenuRegistered => _contextMenuRegistered;
+  FolderSortField get folderSortField => _folderSortField;
+  FolderSortDirection get folderSortDirection => _folderSortDirection;
+  String get blacklistPattern => _blacklistPattern;
 
   String get effectiveFfmpegPath => _ffmpegPath.isEmpty ? 'ffmpeg' : _ffmpegPath;
   String get effectiveFfprobePath {
@@ -40,6 +52,11 @@ class SettingsProvider extends ChangeNotifier {
     _outputDir = prefs.getString(_keyOutputDir) ?? '';
     _outputPrefix = prefs.getString(_keyOutputPrefix) ?? '';
     _outputSuffix = prefs.getString(_keyOutputSuffix) ?? '_cramp4';
+    _folderSortField = FolderSortField.values.byName(
+        prefs.getString(_keyFolderSortField) ?? FolderSortField.dateCreated.name);
+    _folderSortDirection = FolderSortDirection.values.byName(
+        prefs.getString(_keyFolderSortDirection) ?? FolderSortDirection.ascending.name);
+    _blacklistPattern = prefs.getString(_keyBlacklistPattern) ?? r'_cramp4';
     await _checkContextMenuStatus();
     notifyListeners();
   }
@@ -113,5 +130,26 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyOutputSuffix, suffix);
+  }
+
+  Future<void> setFolderSortField(FolderSortField v) async {
+    _folderSortField = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyFolderSortField, v.name);
+  }
+
+  Future<void> setFolderSortDirection(FolderSortDirection v) async {
+    _folderSortDirection = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyFolderSortDirection, v.name);
+  }
+
+  Future<void> setBlacklistPattern(String pattern) async {
+    _blacklistPattern = pattern;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyBlacklistPattern, pattern);
   }
 }

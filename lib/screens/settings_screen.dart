@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/full_width_dropdown.dart';
 import '../widgets/hover_text_field.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _outputDirController;
   late TextEditingController _prefixController;
   late TextEditingController _suffixController;
+  late TextEditingController _blacklistController;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _outputDirController = TextEditingController(text: settings.outputDir);
     _prefixController = TextEditingController(text: settings.outputPrefix);
     _suffixController = TextEditingController(text: settings.outputSuffix);
+    _blacklistController = TextEditingController(text: settings.blacklistPattern);
   }
 
   @override
@@ -35,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _outputDirController.dispose();
     _prefixController.dispose();
     _suffixController.dispose();
+    _blacklistController.dispose();
     super.dispose();
   }
 
@@ -223,6 +227,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Folder Navigation card
+        Consumer<SettingsProvider>(
+          builder: (context, settings, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _cardHeader(Icons.video_library_outlined, 'Folder Navigation'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Sort By'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<FolderSortField>(
+                              value: settings.folderSortField,
+                              items: FolderSortField.values,
+                              labelOf: (v) => switch (v) {
+                                FolderSortField.dateCreated => 'Date Created',
+                                FolderSortField.dateModified => 'Date Modified',
+                                FolderSortField.title => 'Title',
+                              },
+                              onChanged: (v) {
+                                if (v != null) settings.setFolderSortField(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Sort Direction'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<FolderSortDirection>(
+                              value: settings.folderSortDirection,
+                              items: FolderSortDirection.values,
+                              labelOf: (v) => switch (v) {
+                                FolderSortDirection.ascending => 'Ascending',
+                                FolderSortDirection.descending => 'Descending',
+                              },
+                              onChanged: (v) {
+                                if (v != null) settings.setFolderSortDirection(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _fieldLabel('Blacklist Pattern'),
+                  const SizedBox(height: 6),
+                  HoverTextField(
+                    controller: _blacklistController,
+                    decoration: const InputDecoration(hintText: r'_cramp4'),
+                    onChanged: settings.setBlacklistPattern,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Filenames matching this regex are excluded when loading a folder.',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
