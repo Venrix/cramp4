@@ -1,6 +1,6 @@
 # cramp4
 
-A Windows desktop video compression and encoding tool built with Flutter. Wraps your system installation of ffmpeg to compress, re-encode, and convert video files.
+A Windows desktop video compression and encoding tool built with Flutter. Wraps your system installation of ffmpeg to compress, re-encode, trim and convert video files.
 
 <img alt="image" src="https://github.com/user-attachments/assets/1af9e0d9-5011-42af-b3ac-b47b2497adb7" />
 <br>
