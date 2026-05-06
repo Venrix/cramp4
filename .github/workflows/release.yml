@@ -25,17 +25,26 @@ jobs:
         shell: pwsh
         run: |
           $version = '${{ github.ref_name }}'.TrimStart('v')
-          flutter build windows --release --build-name=$version
+          flutter build windows --release --build-name=$version --build-number=${{ github.run_number }}
 
-      - name: Package release
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          choco install innosetup --no-progress -y
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss /DAppVersion=$version
+
+      - name: Package portable zip
         shell: pwsh
         run: |
           Compress-Archive `
             -Path build\windows\x64\runner\Release\* `
-            -DestinationPath cramp4-${{ github.ref_name }}-windows.zip
+            -DestinationPath build\windows\installer\cramp4-${{ github.ref_name }}-windows-portable.zip
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: cramp4-${{ github.ref_name }}-windows.zip
+          files: |
+            build/windows/installer/cramp4-*-windows-setup.exe
+            build/windows/installer/cramp4-*-windows-portable.zip
           generate_release_notes: true
