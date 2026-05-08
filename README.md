@@ -1,6 +1,8 @@
 # cramp4
 
-A Windows desktop video compression and encoding tool built with Flutter. Wraps your system installation of ffmpeg to compress, re-encode, trim and convert video files.
+Desktop video compression and encoding tool built with Flutter. Wraps your system installation of ffmpeg to compress, re-encode, trim and convert video files.
+
+Runs on **Windows** and **Linux**.
 
 <img alt="image" src="https://github.com/user-attachments/assets/1af9e0d9-5011-42af-b3ac-b47b2497adb7" />
 <br>
@@ -17,29 +19,50 @@ A Windows desktop video compression and encoding tool built with Flutter. Wraps 
 - **Drag & drop** — drag a video file directly onto the window
 - **Preserves timestamps** — output file keeps the original creation and modification dates
 - **Settings** — override ffmpeg binary path, output folder, and output filename suffix
+- **Shell integration** — right-click context menu entry for video files (Windows only)
 
 ## Requirements
 
 - [ffmpeg](https://ffmpeg.org/download.html) installed and available in `PATH` (or set a custom path in Settings)
-  
-  Quick install via winget:
-  ```
-  winget install -e --id Gyan.FFmpeg
-  ```
+
+### Windows
+
+```
+winget install -e --id Gyan.FFmpeg
+```
+
+### Linux
+
+```
+sudo apt install ffmpeg        # Debian/Ubuntu
+sudo dnf install ffmpeg        # Fedora
+sudo pacman -S ffmpeg          # Arch
+```
 
 ## Developing
+
+### Windows
 
 **Prerequisites:** [Flutter SDK](https://docs.flutter.dev/get-started/install/windows/desktop) with Windows desktop support enabled.
 
 ```bash
-# Install dependencies
 flutter pub get
-
-# Run in debug mode
 flutter run -d windows
-
-# Build release executable
 flutter build windows
 ```
 
-Output: `build\windows\x64\runner\Release\cramp4.exe`
+Output: `build\windows\x64\runner\Release\`
+
+### Linux
+
+**Prerequisites:** [Flutter SDK](https://docs.flutter.dev/get-started/install/linux) with Linux desktop support enabled, plus build dependencies:
+
+```bash
+sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+flutter config --enable-linux-desktop
+flutter pub get
+flutter run -d linux
+flutter build linux
+```
+
+Output: `build/linux/x64/release/bundle/`

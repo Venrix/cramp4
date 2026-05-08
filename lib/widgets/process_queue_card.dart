@@ -183,12 +183,16 @@ class _JobView extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
-              onPressed: () => Process.run(
-                'explorer',
-                ['/select,', job.outputPath.replaceAll('/', '\\')],
-              ),
+              onPressed: () {
+                if (Platform.isWindows) {
+                  Process.run('explorer', ['/select,', job.outputPath.replaceAll('/', '\\')]);
+                } else {
+                  final dir = job.outputPath.substring(0, job.outputPath.lastIndexOf('/'));
+                  Process.run('xdg-open', [dir]);
+                }
+              },
               icon: const Icon(Icons.folder_open_outlined, size: 16),
-              label: const Text('Show in Explorer'),
+              label: Text(Platform.isWindows ? 'Show in Explorer' : 'Open Folder'),
             ),
           ),
         ],

@@ -39,7 +39,7 @@ class FfmpegService {
       '-passlogfile', passlogFile,
       '-an',
       '-f', 'null',
-      'NUL',
+      Platform.isWindows ? 'NUL' : '/dev/null',
     ];
   }
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -168,6 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+        if (Platform.isWindows) ...[
         const SizedBox(height: 16),
         // Shell Integration card
         Consumer<SettingsProvider>(
@@ -233,6 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+        ], // Platform.isWindows
         const SizedBox(height: 16),
         // Folder Navigation card
         Consumer<SettingsProvider>(

@@ -244,15 +244,19 @@ class EncodingProvider extends ChangeNotifier {
 
   Future<void> _copyFileTimestamps(String inputPath, String outputPath) async {
     try {
-      final src = inputPath.replaceAll("'", "''");
-      final dst = outputPath.replaceAll("'", "''");
-      await Process.run('powershell', [
-        '-NoProfile', '-NonInteractive', '-Command',
-        "\$s=Get-Item -LiteralPath '$src';"
-        "\$d=Get-Item -LiteralPath '$dst';"
-        "\$d.CreationTime=\$s.CreationTime;"
-        "\$d.LastWriteTime=\$s.LastWriteTime",
-      ]);
+      if (Platform.isWindows) {
+        final src = inputPath.replaceAll("'", "''");
+        final dst = outputPath.replaceAll("'", "''");
+        await Process.run('powershell', [
+          '-NoProfile', '-NonInteractive', '-Command',
+          "\$s=Get-Item -LiteralPath '$src';"
+          "\$d=Get-Item -LiteralPath '$dst';"
+          "\$d.CreationTime=\$s.CreationTime;"
+          "\$d.LastWriteTime=\$s.LastWriteTime",
+        ]);
+      } else {
+        await Process.run('touch', ['-r', inputPath, outputPath]);
+      }
     } catch (_) {}
   }
 

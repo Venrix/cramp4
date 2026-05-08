@@ -35,6 +35,7 @@ class SettingsProvider extends ChangeNotifier {
   FolderSortDirection get folderSortDirection => _folderSortDirection;
   String get blacklistPattern => _blacklistPattern;
 
+  bool get contextMenuSupported => Platform.isWindows;
   String get effectiveFfmpegPath => _ffmpegPath.isEmpty ? 'ffmpeg' : _ffmpegPath;
   String get effectiveFfprobePath {
     if (_ffmpegPath.isEmpty) return 'ffprobe';
@@ -57,7 +58,7 @@ class SettingsProvider extends ChangeNotifier {
     _folderSortDirection = FolderSortDirection.values.byName(
         prefs.getString(_keyFolderSortDirection) ?? FolderSortDirection.ascending.name);
     _blacklistPattern = prefs.getString(_keyBlacklistPattern) ?? r'_cramp4';
-    await _checkContextMenuStatus();
+    if (Platform.isWindows) await _checkContextMenuStatus();
     notifyListeners();
   }
 
@@ -67,6 +68,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<bool> registerContextMenu() async {
+    if (!Platform.isWindows) return false;
     final exe = Platform.resolvedExecutable;
     final r1 = await Process.run('reg', [
       'add', _shellKey, '/ve', '/d', 'Open in cramp4', '/f',
@@ -88,6 +90,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<bool> unregisterContextMenu() async {
+    if (!Platform.isWindows) return false;
     final result = await Process.run('reg', ['delete', _shellKey, '/f']);
     await _notifyShell();
     if (result.exitCode == 0) _contextMenuRegistered = false;
