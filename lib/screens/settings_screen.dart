@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
+import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/full_width_dropdown.dart';
 import '../widgets/hover_text_field.dart';
@@ -22,6 +23,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _prefixController;
   late TextEditingController _suffixController;
   late TextEditingController _blacklistController;
+
+  UpdateInfo? _updateInfo;
+  bool _checkingUpdate = false;
+  bool _downloading = false;
+  double _downloadProgress = 0;
+  String? _updateError;
 
   @override
   void initState() {
@@ -236,6 +243,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+        if (!UpdateService.isPortable) ...[
+        const SizedBox(height: 16),
+        // Updates card
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _cardHeader(Icons.system_update_outlined, 'Updates'),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _updateInfo != null
+                                ? 'Update available: v${_updateInfo!.version}'
+                                : _updateError != null
+                                    ? _updateError!
+                                    : _checkingUpdate
+                                        ? 'Checking for updates...'
+                                        : 'Check for new releases on GitHub.',
+                            style: TextStyle(
+                              color: _updateInfo != null
+                                  ? AppTheme.accent
+                                  : _updateError != null
+                                      ? Colors.red[300]
+                                      : AppTheme.textPrimary,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (_downloading) ...[
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: _downloadProgress > 0
+                                    ? _downloadProgress
+                                    : null,
+                                backgroundColor: AppTheme.surface,
+                                color: AppTheme.accent,
+                                minHeight: 4,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    OutlinedButton(
+                      onPressed: _checkingUpdate || _downloading
+                          ? null
+                          : _updateInfo != null
+                              ? _installUpdate
+                              : _checkForUpdate,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.accent,
+                        side: const BorderSide(color: AppTheme.accent),
+                        disabledForegroundColor: AppTheme.textSecondary,
+                        disabledMouseCursor: SystemMouseCursors.basic,
+                      ),
+                      child: Text(
+                        _downloading
+                            ? 'Installing...'
+                            : _checkingUpdate
+                                ? 'Checking...'
+                                : _updateInfo != null
+                                    ? 'Install'
+                                    : 'Check for Updates',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        ], // !isPortable
         ], // Platform.isWindows
         const SizedBox(height: 16),
         // Folder Navigation card
@@ -317,6 +405,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _checkForUpdate() async {
+    setState(() {
+      _checkingUpdate = true;
+      _updateError = null;
+      _updateInfo = null;
+    });
+    try {
+      final info = await UpdateService.checkForUpdate();
+      if (!mounted) return;
+      setState(() {
+        _checkingUpdate = false;
+        _updateInfo = info;
+        if (info == null) _updateError = 'Already on the latest version.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _checkingUpdate = false;
+        _updateError = 'Failed to check for updates.';
+      });
+    }
+  }
+
+  Future<void> _installUpdate() async {
+    if (_updateInfo == null) return;
+    setState(() {
+      _downloading = true;
+      _downloadProgress = 0;
+    });
+    try {
+      await UpdateService.downloadAndInstall(
+        _updateInfo!,
+        (progress) {
+          if (mounted) setState(() => _downloadProgress = progress);
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _downloading = false;
+        _updateError = 'Update failed. Try downloading manually.';
+        _updateInfo = null;
+      });
+    }
   }
 
   Widget _cardHeader(IconData icon, String text) => Row(

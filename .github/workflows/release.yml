@@ -37,6 +37,7 @@ jobs:
       - name: Package portable zip
         shell: pwsh
         run: |
+          New-Item -Path build\windows\x64\runner\Release\.portable -ItemType File -Force
           Compress-Archive `
             -Path build\windows\x64\runner\Release\* `
             -DestinationPath build\windows\installer\cramp4-${{ github.ref_name }}-windows-portable.zip
