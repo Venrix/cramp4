@@ -39,6 +39,7 @@ class _TrimScreenState extends State<TrimScreen> {
     _playingSub = _player.stream.playing.listen((playing) {
       if (mounted) setState(() => _isPlaying = playing);
     });
+    HardwareKeyboard.instance.addHandler(_handleGlobalKey);
   }
 
   @override
@@ -54,11 +55,50 @@ class _TrimScreenState extends State<TrimScreen> {
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     _focusNode.dispose();
     _positionSub?.cancel();
     _playingSub?.cancel();
     _player.dispose();
     super.dispose();
+  }
+
+  bool _handleGlobalKey(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
+    // Only when trim tab is active
+    final tabIndex = context.read<AppStateProvider>().tabIndex;
+    if (tabIndex != 1) return false;
+    // Don't intercept if a text field has focus
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus?.context?.widget is EditableText) return false;
+
+    final key = event.logicalKey;
+
+    if (key == LogicalKeyboardKey.space && event is KeyDownEvent) {
+      _player.playOrPause();
+      return true;
+    }
+
+    // Arrow keys only when nothing specific is focused (focusNode is the
+    // trim screen's own node, or nothing at all)
+    final nothingFocused = focus == null ||
+        focus == _focusNode ||
+        focus.context == null;
+    if (!nothingFocused) return false;
+
+    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight) {
+      final shift = HardwareKeyboard.instance.isShiftPressed;
+      final step = shift ? 15000 : 5000;
+      final delta = key == LogicalKeyboardKey.arrowLeft ? -step : step;
+      final fileInfo = context.read<AppStateProvider>().fileInfo;
+      if (fileInfo == null) return false;
+      final newMs = (_position.inMilliseconds + delta)
+          .clamp(0, fileInfo.duration.inMilliseconds);
+      _onSeek(Duration(milliseconds: newMs));
+      return true;
+    }
+
+    return false;
   }
 
   Future<void> _loadVideo(String path) async {
@@ -122,14 +162,6 @@ class _TrimScreenState extends State<TrimScreen> {
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.space) {
-          _player.playOrPause();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
       child: Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -206,46 +238,91 @@ class _TrimScreenState extends State<TrimScreen> {
     required IconData icon,
     required VoidCallback onPressed,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppTheme.accent, size: 22),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11),
-              ),
-            ],
+    return _FocusableButton(
+      onPressed: onPressed,
+      builder: (focused) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: focused ? AppTheme.accent : Colors.transparent,
+            width: 1.5,
           ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppTheme.accent, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 11),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildPlayPause() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => _player.playOrPause(),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: const BoxDecoration(
-            color: AppTheme.accent,
-            shape: BoxShape.circle,
+    return _FocusableButton(
+      onPressed: () => _player.playOrPause(),
+      builder: (focused) => Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppTheme.accent,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: focused ? Colors.white : Colors.transparent,
+            width: 1.5,
           ),
-          child: Icon(
-            _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 22,
-          ),
+        ),
+        child: Icon(
+          _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          color: Colors.white,
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
+
+class _FocusableButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final Widget Function(bool focused) builder;
+
+  const _FocusableButton({
+    required this.onPressed,
+    required this.builder,
+  });
+
+  @override
+  State<_FocusableButton> createState() => _FocusableButtonState();
+}
+
+class _FocusableButtonState extends State<_FocusableButton> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      onFocusChange: (f) => setState(() => _focused = f),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.enter ||
+             event.logicalKey == LogicalKeyboardKey.space)) {
+          widget.onPressed();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onPressed,
+          child: widget.builder(_focused),
         ),
       ),
     );

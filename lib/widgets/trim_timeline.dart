@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 
-class TrimTimeline extends StatelessWidget {
+class TrimTimeline extends StatefulWidget {
   final Duration total;
   final Duration start;
   final Duration end;
@@ -18,10 +19,27 @@ class TrimTimeline extends StatelessWidget {
     required this.onSeek,
   });
 
+  @override
+  State<TrimTimeline> createState() => _TrimTimelineState();
+}
+
+class _TrimTimelineState extends State<TrimTimeline> {
+  bool _focused = false;
+
+  static const _seekStepMs = 5000;
+  static const _seekStepLargeMs = 15000;
+
   Duration _seekFromDx(double dx, double width) {
-    if (width == 0 || total.inMilliseconds == 0) return Duration.zero;
+    if (width == 0 || widget.total.inMilliseconds == 0) return Duration.zero;
     final fraction = dx.clamp(0.0, width) / width;
-    return Duration(milliseconds: (fraction * total.inMilliseconds).round());
+    return Duration(
+        milliseconds: (fraction * widget.total.inMilliseconds).round());
+  }
+
+  void _seekRelative(int deltaMs) {
+    final newMs = (widget.position.inMilliseconds + deltaMs)
+        .clamp(0, widget.total.inMilliseconds);
+    widget.onSeek(Duration(milliseconds: newMs));
   }
 
   @override
@@ -31,23 +49,52 @@ class TrimTimeline extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          return MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (d) => onSeek(_seekFromDx(d.localPosition.dx, w)),
-              onHorizontalDragStart: (d) =>
-                  onSeek(_seekFromDx(d.localPosition.dx, w)),
-              onHorizontalDragUpdate: (d) =>
-                  onSeek(_seekFromDx(d.localPosition.dx, w)),
-              child: CustomPaint(
-                painter: _TrimTimelinePainter(
-                  total: total,
-                  start: start,
-                  end: end,
-                  position: position,
+          return Focus(
+            onFocusChange: (f) => setState(() => _focused = f),
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+                return KeyEventResult.ignored;
+              }
+              final shift = HardwareKeyboard.instance.isShiftPressed;
+              final step = shift ? _seekStepLargeMs : _seekStepMs;
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                _seekRelative(-step);
+                return KeyEventResult.handled;
+              }
+              if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                _seekRelative(step);
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _focused ? AppTheme.accent : Colors.transparent,
+                  width: 1.5,
                 ),
-                size: Size(w, 48),
+              ),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (d) =>
+                      widget.onSeek(_seekFromDx(d.localPosition.dx, w)),
+                  onHorizontalDragStart: (d) =>
+                      widget.onSeek(_seekFromDx(d.localPosition.dx, w)),
+                  onHorizontalDragUpdate: (d) =>
+                      widget.onSeek(_seekFromDx(d.localPosition.dx, w)),
+                  child: CustomPaint(
+                    painter: _TrimTimelinePainter(
+                      total: widget.total,
+                      start: widget.start,
+                      end: widget.end,
+                      position: widget.position,
+                    ),
+                    size: Size(w, 48),
+                  ),
+                ),
               ),
             ),
           );

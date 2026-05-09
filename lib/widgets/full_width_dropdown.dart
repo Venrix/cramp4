@@ -24,6 +24,7 @@ class FullWidthDropdown<T> extends StatefulWidget {
 
 class _FullWidthDropdownState<T> extends State<FullWidthDropdown<T>> {
   bool _hovered = false;
+  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,43 +32,52 @@ class _FullWidthDropdownState<T> extends State<FullWidthDropdown<T>> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        decoration: BoxDecoration(
-          color: AppTheme.background,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: _hovered ? AppTheme.surfaceVariant : Colors.transparent,
-            width: 1,
+      child: Focus(
+        onFocusChange: (focused) => setState(() => _focused = focused),
+        skipTraversal: true,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: _focused
+                  ? AppTheme.accent
+                  : _hovered
+                      ? AppTheme.surfaceVariant
+                      : Colors.transparent,
+              width: _focused ? 1.5 : 1,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: widget.value,
-            isExpanded: true,
-            dropdownColor: AppTheme.background,
-            borderRadius: BorderRadius.circular(8),
-            mouseCursor: SystemMouseCursors.click,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-            icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
-            items: widget.items
-                .map((v) => DropdownMenuItem<T>(
-                      value: v,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            widget.originalValue == v
-                                ? '${widget.labelOf(v)} (Original)'
-                                : widget.labelOf(v),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: widget.value,
+              isExpanded: true,
+              dropdownColor: AppTheme.background,
+              borderRadius: BorderRadius.circular(8),
+              focusColor: Colors.transparent,
+              mouseCursor: SystemMouseCursors.click,
+              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+              icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+              items: widget.items
+                  .map((v) => DropdownMenuItem<T>(
+                        value: v,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Text(
+                              widget.originalValue == v
+                                  ? '${widget.labelOf(v)} (Original)'
+                                  : widget.labelOf(v),
+                            ),
                           ),
                         ),
-                      ),
-                    ))
-                .toList(),
-            onChanged: widget.onChanged,
+                      ))
+                  .toList(),
+              onChanged: widget.onChanged,
+            ),
           ),
         ),
       ),

@@ -226,11 +226,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           foregroundColor: settings.contextMenuRegistered
                               ? AppTheme.textSecondary
                               : AppTheme.accent,
-                          side: BorderSide(
-                            color: settings.contextMenuRegistered
-                                ? AppTheme.textSecondary
-                                : AppTheme.accent,
-                          ),
+                        ).copyWith(
+                          side: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.focused)) {
+                              return const BorderSide(color: AppTheme.accent, width: 1.5);
+                            }
+                            return BorderSide(
+                              color: settings.contextMenuRegistered
+                                  ? AppTheme.textSecondary
+                                  : AppTheme.accent,
+                            );
+                          }),
                         ),
                         child: Text(
                           settings.contextMenuRegistered ? 'Remove' : 'Add',
@@ -303,9 +309,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : _checkForUpdate,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.accent,
-                        side: const BorderSide(color: AppTheme.accent),
                         disabledForegroundColor: AppTheme.textSecondary,
                         disabledMouseCursor: SystemMouseCursors.basic,
+                      ).copyWith(
+                        side: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.disabled)) {
+                            return BorderSide.none;
+                          }
+                          if (states.contains(WidgetState.focused)) {
+                            return const BorderSide(color: AppTheme.accent, width: 1.5);
+                          }
+                          return const BorderSide(color: AppTheme.accent);
+                        }),
                       ),
                       child: Text(
                         _downloading
@@ -481,8 +496,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         height: double.infinity,
         child: OutlinedButton(
           onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          style: const ButtonStyle(
+            padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
           ),
           child: const Text('Browse'),
         ),

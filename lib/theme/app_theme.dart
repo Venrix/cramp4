@@ -61,6 +61,19 @@ class AppTheme {
                 ? accent.withAlpha(100)
                 : Colors.grey.shade800,
           ),
+          trackOutlineColor: WidgetStateProperty.resolveWith(
+            (states) {
+              if (states.contains(WidgetState.focused)) return accent;
+              return Colors.transparent;
+            },
+          ),
+          trackOutlineWidth: WidgetStateProperty.resolveWith(
+            (states) {
+              if (states.contains(WidgetState.focused)) return 1.5;
+              return 0;
+            },
+          ),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         ),
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: accent,
@@ -73,21 +86,51 @@ class AppTheme {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ).copyWith(
             mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) return accent.withAlpha(80);
+              if (states.contains(WidgetState.hovered)) return accentDark;
+              return accent;
+            }),
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Colors.white, width: 1.5);
+              }
+              return BorderSide.none;
+            }),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: textPrimary,
             backgroundColor: surfaceVariant,
-            side: BorderSide.none,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ).copyWith(
             mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) return surfaceVariant.withAlpha(80);
+              if (states.contains(WidgetState.hovered)) return surfaceVariant.withAlpha(220);
+              return surfaceVariant;
+            }),
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: accent, width: 1.5);
+              }
+              return BorderSide.none;
+            }),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom().copyWith(
             mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: accent, width: 1.5);
+              }
+              return null;
+            }),
           ),
         ),
         textTheme: GoogleFonts.interTextTheme(

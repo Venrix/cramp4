@@ -92,6 +92,15 @@ class AppStateProvider extends ChangeNotifier {
     _folderPath = null;
   }
 
+  void clearFile() {
+    _fileInfo = null;
+    _fileError = null;
+    _trimStart = Duration.zero;
+    _trimEnd = Duration.zero;
+    _clearFolderState();
+    notifyListeners();
+  }
+
   Future<void> pickFile(String ffprobePath) async {
     _clearFolderState();
     final result = await FilePicker.pickFiles(

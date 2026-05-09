@@ -62,7 +62,9 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final tabIndex = context.watch<AppStateProvider>().tabIndex;
 
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
       body: DropZone(
       child: Column(
         children: [
@@ -82,6 +84,7 @@ class MainShell extends StatelessWidget {
           ),
           const BottomActionBar(),
         ],
+      ),
       ),
       ),
     );
