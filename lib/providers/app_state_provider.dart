@@ -273,6 +273,9 @@ class AppStateProvider extends ChangeNotifier {
 
   void setVideoCodec(VideoCodec v) {
     _settings.videoCodec = v;
+    if (!v.supportsTwoPass) {
+      _settings.targetSizeMB = null;
+    }
     notifyListeners();
     _save();
   }
