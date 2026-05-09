@@ -22,6 +22,7 @@ Runs on **Windows** and **Linux**.
 - **Preserves timestamps** — output file keeps the original creation and modification dates
 - **Settings** — override ffmpeg binary path, output folder, and output filename suffix
 - **Shell integration** — right-click context menu entry for video files (Windows only)
+- **In-app updates** — manually check for and install new releases (Windows installer builds only, not portable)
 
 ## Requirements
 
