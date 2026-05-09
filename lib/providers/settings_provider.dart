@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/encode_settings.dart';
+
 enum FolderSortField { dateCreated, dateModified, title }
 enum FolderSortDirection { ascending, descending }
 
@@ -14,6 +16,10 @@ class SettingsProvider extends ChangeNotifier {
   static const _keyFolderSortField = 'folder_sort_field';
   static const _keyFolderSortDirection = 'folder_sort_direction';
   static const _keyBlacklistPattern = 'folder_blacklist_pattern';
+  static const _keyDefaultVideoCodec = 'default_video_codec';
+  static const _keyDefaultResolution = 'default_resolution';
+  static const _keyDefaultAudioFormat = 'default_audio_format';
+  static const _keyDefaultAudioBitrate = 'default_audio_bitrate';
   static const _shellKey =
       r'HKCU\Software\Classes\*\shell\OpenInCramp4';
 
@@ -25,6 +31,10 @@ class SettingsProvider extends ChangeNotifier {
   FolderSortField _folderSortField = FolderSortField.dateCreated;
   FolderSortDirection _folderSortDirection = FolderSortDirection.ascending;
   String _blacklistPattern = r'_cramp4';
+  VideoCodec _defaultVideoCodec = VideoCodec.copy;
+  ResolutionScale _defaultResolution = ResolutionScale.original;
+  AudioFormat _defaultAudioFormat = AudioFormat.copy;
+  int _defaultAudioBitrate = 128;
 
   String get ffmpegPath => _ffmpegPath;
   String get outputDir => _outputDir;
@@ -34,6 +44,10 @@ class SettingsProvider extends ChangeNotifier {
   FolderSortField get folderSortField => _folderSortField;
   FolderSortDirection get folderSortDirection => _folderSortDirection;
   String get blacklistPattern => _blacklistPattern;
+  VideoCodec get defaultVideoCodec => _defaultVideoCodec;
+  ResolutionScale get defaultResolution => _defaultResolution;
+  AudioFormat get defaultAudioFormat => _defaultAudioFormat;
+  int get defaultAudioBitrate => _defaultAudioBitrate;
 
   bool get contextMenuSupported => Platform.isWindows;
   String get effectiveFfmpegPath => _ffmpegPath.isEmpty ? 'ffmpeg' : _ffmpegPath;
@@ -58,6 +72,13 @@ class SettingsProvider extends ChangeNotifier {
     _folderSortDirection = FolderSortDirection.values.byName(
         prefs.getString(_keyFolderSortDirection) ?? FolderSortDirection.ascending.name);
     _blacklistPattern = prefs.getString(_keyBlacklistPattern) ?? r'_cramp4';
+    _defaultVideoCodec = VideoCodec.values.byName(
+        prefs.getString(_keyDefaultVideoCodec) ?? VideoCodec.copy.name);
+    _defaultResolution = ResolutionScale.values.byName(
+        prefs.getString(_keyDefaultResolution) ?? ResolutionScale.original.name);
+    _defaultAudioFormat = AudioFormat.values.byName(
+        prefs.getString(_keyDefaultAudioFormat) ?? AudioFormat.copy.name);
+    _defaultAudioBitrate = prefs.getInt(_keyDefaultAudioBitrate) ?? 128;
     if (Platform.isWindows) await _checkContextMenuStatus();
     notifyListeners();
   }
@@ -154,5 +175,33 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyBlacklistPattern, pattern);
+  }
+
+  Future<void> setDefaultVideoCodec(VideoCodec v) async {
+    _defaultVideoCodec = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDefaultVideoCodec, v.name);
+  }
+
+  Future<void> setDefaultResolution(ResolutionScale v) async {
+    _defaultResolution = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDefaultResolution, v.name);
+  }
+
+  Future<void> setDefaultAudioFormat(AudioFormat v) async {
+    _defaultAudioFormat = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDefaultAudioFormat, v.name);
+  }
+
+  Future<void> setDefaultAudioBitrate(int v) async {
+    _defaultAudioBitrate = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyDefaultAudioBitrate, v);
   }
 }

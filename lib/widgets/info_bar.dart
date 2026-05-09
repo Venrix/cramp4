@@ -13,7 +13,8 @@ class InfoBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
     final fileInfo = appState.fileInfo;
-    final ffprobePath = context.read<SettingsProvider>().effectiveFfprobePath;
+    final settingsProvider = context.read<SettingsProvider>();
+    final ffprobePath = settingsProvider.effectiveFfprobePath;
 
     return Container(
       height: 44,
@@ -42,7 +43,7 @@ class InfoBar extends StatelessWidget {
               _OpenButton(
                 icon: Icons.movie_outlined,
                 label: 'Open file',
-                onPressed: () => appState.pickFile(ffprobePath),
+                onPressed: () => appState.pickFile(ffprobePath, settingsProvider),
               ),
               const SizedBox(width: 4),
               _OpenButton(
@@ -52,6 +53,7 @@ class InfoBar extends StatelessWidget {
                   final settings = context.read<SettingsProvider>();
                   appState.pickFolder(
                     ffprobePath,
+                    settings,
                     sortField: settings.folderSortField,
                     sortDirection: settings.folderSortDirection,
                     blacklistPattern: settings.blacklistPattern,
@@ -97,7 +99,7 @@ class InfoBar extends StatelessWidget {
               _navButton(
                 icon: Icons.chevron_left,
                 enabled: appState.folderIndex > 0 && !appState.isLoadingFile,
-                onTap: () => appState.navigateFolderPrev(ffprobePath),
+                onTap: () => appState.navigateFolderPrev(ffprobePath, settingsProvider),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -112,7 +114,7 @@ class InfoBar extends StatelessWidget {
               _navButton(
                 icon: Icons.chevron_right,
                 enabled: appState.folderIndex < appState.folderTotal - 1 && !appState.isLoadingFile,
-                onTap: () => appState.navigateFolderNext(ffprobePath),
+                onTap: () => appState.navigateFolderNext(ffprobePath, settingsProvider),
               ),
               const SizedBox(width: 4),
             ],

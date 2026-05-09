@@ -29,9 +29,9 @@ class _DropZoneState extends State<DropZone> {
         if (files.isEmpty) return;
         final path = files.first.path;
         final appState = context.read<AppStateProvider>();
-        final ffprobePath =
-            context.read<SettingsProvider>().effectiveFfprobePath;
-        appState.loadFile(path, ffprobePath);
+        final settingsProvider = context.read<SettingsProvider>();
+        final ffprobePath = settingsProvider.effectiveFfprobePath;
+        appState.loadFile(path, ffprobePath, settingsProvider);
       },
       child: Stack(
         children: [

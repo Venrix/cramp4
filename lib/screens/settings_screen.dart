@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/encode_settings.dart';
 import '../providers/settings_provider.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
@@ -174,6 +175,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Encoding Defaults card
+        Consumer<SettingsProvider>(
+          builder: (context, settings, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _cardHeader(Icons.tune_outlined, 'Encoding Defaults'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Video Codec'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<VideoCodec>(
+                              value: settings.defaultVideoCodec,
+                              items: VideoCodec.values,
+                              labelOf: (v) => v.displayName,
+                              onChanged: (v) {
+                                if (v != null) settings.setDefaultVideoCodec(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Resolution'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<ResolutionScale>(
+                              value: settings.defaultResolution,
+                              items: ResolutionScale.values,
+                              labelOf: (v) => v.displayName,
+                              onChanged: (v) {
+                                if (v != null) settings.setDefaultResolution(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Audio Format'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<AudioFormat>(
+                              value: settings.defaultAudioFormat,
+                              items: AudioFormat.values,
+                              labelOf: (v) => v.displayName,
+                              onChanged: (v) {
+                                if (v != null) settings.setDefaultAudioFormat(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel('Audio Bitrate'),
+                            const SizedBox(height: 6),
+                            FullWidthDropdown<int>(
+                              value: settings.defaultAudioBitrate,
+                              items: const [320, 256, 192, 128, 96, 64, 32],
+                              labelOf: (v) => '${v}k',
+                              onChanged: (v) {
+                                if (v != null) settings.setDefaultAudioBitrate(v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

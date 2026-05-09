@@ -101,7 +101,7 @@ class AppStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> pickFile(String ffprobePath) async {
+  Future<void> pickFile(String ffprobePath, SettingsProvider settingsProvider) async {
     _clearFolderState();
     final result = await FilePicker.pickFiles(
       type: FileType.video,
@@ -110,23 +110,24 @@ class AppStateProvider extends ChangeNotifier {
     if (result == null || result.files.isEmpty) return;
     final path = result.files.first.path;
     if (path == null) return;
-    await _probeFile(path, ffprobePath);
+    await _probeFile(path, ffprobePath, settingsProvider);
   }
 
-  Future<void> loadFile(String path, String ffprobePath) {
+  Future<void> loadFile(String path, String ffprobePath, SettingsProvider settingsProvider) {
     _clearFolderState();
-    return _probeFile(path, ffprobePath);
+    return _probeFile(path, ffprobePath, settingsProvider);
   }
 
   Future<void> pickFolder(
-    String ffprobePath, {
+    String ffprobePath,
+    SettingsProvider settingsProvider, {
     required FolderSortField sortField,
     required FolderSortDirection sortDirection,
     required String blacklistPattern,
   }) async {
     final dir = await FilePicker.getDirectoryPath();
     if (dir == null) return;
-    await _loadFolder(dir, ffprobePath,
+    await _loadFolder(dir, ffprobePath, settingsProvider,
         sortField: sortField,
         sortDirection: sortDirection,
         blacklistPattern: blacklistPattern);
@@ -134,7 +135,8 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<void> _loadFolder(
     String dirPath,
-    String ffprobePath, {
+    String ffprobePath,
+    SettingsProvider settingsProvider, {
     required FolderSortField sortField,
     required FolderSortDirection sortDirection,
     required String blacklistPattern,
@@ -210,23 +212,23 @@ class AppStateProvider extends ChangeNotifier {
       return;
     }
 
-    await _probeFile(_folderFiles[0], ffprobePath);
+    await _probeFile(_folderFiles[0], ffprobePath, settingsProvider);
     // _isLoadingFile reset by _probeFile's finally block
   }
 
-  Future<void> navigateFolderPrev(String ffprobePath) async {
+  Future<void> navigateFolderPrev(String ffprobePath, SettingsProvider settingsProvider) async {
     if (_isLoadingFile || _folderIndex <= 0) return;
     _folderIndex--;
-    await _probeFile(_folderFiles[_folderIndex], ffprobePath);
+    await _probeFile(_folderFiles[_folderIndex], ffprobePath, settingsProvider);
   }
 
-  Future<void> navigateFolderNext(String ffprobePath) async {
+  Future<void> navigateFolderNext(String ffprobePath, SettingsProvider settingsProvider) async {
     if (_isLoadingFile || _folderIndex >= _folderFiles.length - 1) return;
     _folderIndex++;
-    await _probeFile(_folderFiles[_folderIndex], ffprobePath);
+    await _probeFile(_folderFiles[_folderIndex], ffprobePath, settingsProvider);
   }
 
-  Future<void> _probeFile(String path, String ffprobePath) async {
+  Future<void> _probeFile(String path, String ffprobePath, SettingsProvider settingsProvider) async {
     _isLoadingFile = true;
     _fileError = null;
     notifyListeners();
@@ -235,7 +237,7 @@ class AppStateProvider extends ChangeNotifier {
       final service = FfprobeService(ffprobePath: ffprobePath);
       _fileInfo = await service.probe(path);
       _fileError = null;
-      _applyFileDefaults(_fileInfo!);
+      _applyFileDefaults(_fileInfo!, settingsProvider);
     } catch (e) {
       _fileError = e.toString();
       _fileInfo = null;
@@ -245,14 +247,12 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  void _applyFileDefaults(FileInfo info) {
-    final codec = videoCodecFromFfprobe(info.videoCodec);
-    if (codec != null) _settings.videoCodec = codec;
-
-    _settings.audioFormat = AudioFormat.copy;
-
-    final bitrate = nearestAudioBitrate(info.audioBitrate ~/ 1000);
-    if (bitrate != null) _settings.audioBitrateKbps = bitrate;
+  void _applyFileDefaults(FileInfo info, SettingsProvider settingsProvider) {
+    _settings.videoCodec = settingsProvider.defaultVideoCodec;
+    _settings.resolutionScale = settingsProvider.defaultResolution;
+    _settings.targetSizeMB = null;
+    _settings.audioFormat = settingsProvider.defaultAudioFormat;
+    _settings.audioBitrateKbps = settingsProvider.defaultAudioBitrate;
 
     _trimStart = Duration.zero;
     _trimEnd = info.duration;
