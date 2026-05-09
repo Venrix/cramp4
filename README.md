@@ -4,6 +4,8 @@ Desktop video compression and encoding tool built with Flutter. Wraps your syste
 
 Runs on **Windows** and **Linux**.
 
+[![Download latest Release](https://img.shields.io/github/v/release/Venrix/cramp4?label=Download%20latest%20Release&logo=windows&style=for-the-badge)](https://github.com/Venrix/cramp4/releases/latest)
+
 <img alt="image" src="https://github.com/user-attachments/assets/1af9e0d9-5011-42af-b3ac-b47b2497adb7" />
 <br>
 <img alt="image" src="https://github.com/user-attachments/assets/43f69889-14d3-4c59-b9f2-1e7367e19b22" />
