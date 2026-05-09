@@ -64,16 +64,6 @@ class AudioSettingsCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _fieldLabel('AUDIO BITRATE'),
-                    const SizedBox(height: 6),
-                    FullWidthDropdown<int>(
-                      value: settings.audioBitrateKbps,
-                      items: _bitrateOptions,
-                      labelOf: (v) => '${v}k',
-                      onChanged: (v) => appState.setAudioBitrateKbps(v!),
-                      originalValue: originalBitrate,
-                    ),
-                    const SizedBox(height: 14),
                     _fieldLabel('AUDIO FORMAT'),
                     const SizedBox(height: 6),
                     FullWidthDropdown<AudioFormat>(
@@ -83,6 +73,19 @@ class AudioSettingsCard extends StatelessWidget {
                       onChanged: (v) => appState.setAudioFormat(v!),
                       originalValue: originalFormat,
                     ),
+                    if (settings.audioFormat != AudioFormat.copy &&
+                        settings.audioFormat != AudioFormat.flac) ...[
+                      const SizedBox(height: 14),
+                      _fieldLabel('AUDIO BITRATE'),
+                      const SizedBox(height: 6),
+                      FullWidthDropdown<int>(
+                        value: settings.audioBitrateKbps,
+                        items: _bitrateOptions,
+                        labelOf: (v) => '${v}k',
+                        onChanged: (v) => appState.setAudioBitrateKbps(v!),
+                        originalValue: originalBitrate,
+                      ),
+                    ],
                   ],
                 ),
               ),
