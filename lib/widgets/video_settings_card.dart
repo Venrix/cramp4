@@ -168,9 +168,8 @@ class _TargetSizeFieldState extends State<_TargetSizeField> {
   @override
   void didUpdateWidget(_TargetSizeField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final newText = widget.settings.targetSizeMB?.toString() ?? '';
-    if (_controller.text != newText) {
-      _controller.text = newText;
+    if (widget.settings.targetSizeMB == null && _controller.text.isNotEmpty) {
+      _controller.clear();
     }
   }
 
