@@ -66,7 +66,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _cardHeader(Icons.terminal_outlined, 'FFmpeg'),
+                _cardHeader(Icons.terminal_outlined, 'FFmpeg', onReset: () {
+                  settings.setFfmpegPath('');
+                  _ffmpegController.clear();
+                }),
                 const SizedBox(height: 16),
                 _fieldLabel('FFmpeg Binary Path'),
                 const SizedBox(height: 6),
@@ -109,7 +112,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _cardHeader(Icons.folder_outlined, 'Output'),
+                _cardHeader(Icons.folder_outlined, 'Output', onReset: () {
+                  settings.resetOutput();
+                  _outputDirController.clear();
+                  _prefixController.clear();
+                  _suffixController.text = '_cramp4';
+                }),
                 const SizedBox(height: 16),
                 _fieldLabel('Output Folder'),
                 const SizedBox(height: 6),
@@ -187,7 +195,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _cardHeader(Icons.tune_outlined, 'Encoding Defaults'),
+                  _cardHeader(Icons.tune_outlined, 'Encoding Defaults',
+                      onReset: settings.resetEncodingDefaults),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -445,7 +454,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _cardHeader(Icons.video_library_outlined, 'Folder Navigation'),
+                  _cardHeader(Icons.video_library_outlined, 'Folder Navigation',
+                      onReset: () {
+                    settings.resetFolderNavigation();
+                    _blacklistController.text = r'_cramp4';
+                  }),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -564,7 +577,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _cardHeader(IconData icon, String text) => Row(
+  Widget _cardHeader(IconData icon, String text, {VoidCallback? onReset}) => Row(
         children: [
           Icon(icon, size: 26, color: AppTheme.accent),
           const SizedBox(width: 8),
@@ -576,6 +589,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (onReset != null) ...[
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.restart_alt, size: 18),
+              color: AppTheme.textSecondary,
+              tooltip: 'Reset to defaults',
+              onPressed: onReset,
+              mouseCursor: SystemMouseCursors.click,
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(4),
+                minimumSize: const Size(28, 28),
+              ),
+            ),
+          ],
         ],
       );
 

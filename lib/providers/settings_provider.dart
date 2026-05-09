@@ -177,6 +177,41 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setString(_keyBlacklistPattern, pattern);
   }
 
+  Future<void> resetOutput() async {
+    _outputDir = '';
+    _outputPrefix = '';
+    _outputSuffix = '_cramp4';
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyOutputDir);
+    await prefs.remove(_keyOutputPrefix);
+    await prefs.setString(_keyOutputSuffix, '_cramp4');
+  }
+
+  Future<void> resetEncodingDefaults() async {
+    _defaultVideoCodec = VideoCodec.copy;
+    _defaultResolution = ResolutionScale.original;
+    _defaultAudioFormat = AudioFormat.copy;
+    _defaultAudioBitrate = 128;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyDefaultVideoCodec);
+    await prefs.remove(_keyDefaultResolution);
+    await prefs.remove(_keyDefaultAudioFormat);
+    await prefs.remove(_keyDefaultAudioBitrate);
+  }
+
+  Future<void> resetFolderNavigation() async {
+    _folderSortField = FolderSortField.dateCreated;
+    _folderSortDirection = FolderSortDirection.ascending;
+    _blacklistPattern = r'_cramp4';
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyFolderSortField);
+    await prefs.remove(_keyFolderSortDirection);
+    await prefs.setString(_keyBlacklistPattern, r'_cramp4');
+  }
+
   Future<void> setDefaultVideoCodec(VideoCodec v) async {
     _defaultVideoCodec = v;
     notifyListeners();
