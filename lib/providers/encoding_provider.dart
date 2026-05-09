@@ -261,11 +261,14 @@ class EncodingProvider extends ChangeNotifier {
   }
 
   void _cleanPasslogs(String passlogFile) {
-    for (final ext in ['', '.log', '.log.mbtree']) {
-      try {
-        final f = File('$passlogFile$ext');
-        if (f.existsSync()) f.deleteSync();
-      } catch (_) {}
+    final bases = [passlogFile, '$passlogFile-0'];
+    for (final base in bases) {
+      for (final ext in ['', '.log', '.log.mbtree']) {
+        try {
+          final f = File('$base$ext');
+          if (f.existsSync()) f.deleteSync();
+        } catch (_) {}
+      }
     }
   }
 }
