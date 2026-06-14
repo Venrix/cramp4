@@ -95,7 +95,7 @@ class FfmpegService {
       if (settings.videoEnabled) ...[
         ..._videoFilterArgs(settings),
         '-c:v', settings.videoCodec.ffmpegCodec,
-        if (settings.videoCodec != VideoCodec.copy) '-crf', '23',
+        if (settings.videoCodec != VideoCodec.copy) ...['-crf', '23'],
       ] else ...[
         '-vn',
       ],
