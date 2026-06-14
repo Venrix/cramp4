@@ -35,7 +35,7 @@ class VideoSettingsCard extends StatelessWidget {
     }).toList();
 
     return Card(
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

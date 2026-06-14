@@ -17,21 +17,41 @@ class ProcessQueueCard extends StatefulWidget {
 class _ProcessQueueCardState extends State<ProcessQueueCard> {
   final ScrollController _scrollController = ScrollController();
 
+  // Live-tail only while the user is parked at the bottom; scrolling up to
+  // read or select text pauses auto-scroll until they return to the bottom.
+  bool _pinnedToBottom = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updatePinned);
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _updatePinned() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    // maxScrollExtent throws until the viewport has reported its dimensions.
+    if (!position.hasContentDimensions) return;
+    _pinnedToBottom = position.pixels >= position.maxScrollExtent - 24;
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        );
-      }
+      if (!_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      // maxScrollExtent is null until the viewport reports dimensions.
+      if (!position.hasContentDimensions) return;
+      _scrollController.animateTo(
+        position.maxScrollExtent,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -40,7 +60,7 @@ class _ProcessQueueCardState extends State<ProcessQueueCard> {
     final encoding = context.watch<EncodingProvider>();
     final job = encoding.currentJob;
 
-    if (job != null) {
+    if (job != null && _pinnedToBottom) {
       _scrollToBottom();
     }
 
@@ -164,15 +184,17 @@ class _JobView extends StatelessWidget {
               color: AppTheme.background,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: ListView.builder(
-              controller: scrollController,
-              itemCount: job.logLines.length,
-              itemBuilder: (_, i) => Text(
-                job.logLines[i],
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontFamily: 'Consolas',
+            child: SelectionArea(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: job.logLines.length,
+                itemBuilder: (_, i) => Text(
+                  job.logLines[i],
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontFamily: 'Consolas',
+                  ),
                 ),
               ),
             ),

@@ -29,9 +29,13 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
@@ -55,15 +59,19 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
       '-pass', '2',
       '-passlogfile', passlogFile,
-      ..._audioArgs(settings),
+      ..._audioArgs(settings, reencodeCopyAsAac: true),
       outputPath,
     ];
   }
@@ -77,13 +85,17 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       if (settings.videoEnabled) ...[
         ..._videoFilterArgs(settings),
         '-c:v', settings.videoCodec.ffmpegCodec,
-        if (settings.videoCodec != VideoCodec.copy) '-crf', '23',
+        if (settings.videoCodec != VideoCodec.copy) ...['-crf', '23'],
       ] else ...[
         '-vn',
       ],
@@ -101,8 +113,16 @@ class FfmpegService {
     return ['-vf', filter];
   }
 
-  List<String> _audioArgs(EncodeSettings settings) {
+  List<String> _audioArgs(EncodeSettings settings,
+      {bool reencodeCopyAsAac = false}) {
     if (!settings.audioEnabled) return ['-an'];
+    // Two-pass/size-target jobs can't `-c:a copy`: copy + input seek fails at
+    // mux, and a copied track ignores the size budget (overshooting the target).
+    // Re-encode to AAC at the budgeted bitrate, which calculateVideoBitrateKbps
+    // already subtracts, so the target stays accurate.
+    if (reencodeCopyAsAac && settings.audioFormat == AudioFormat.copy) {
+      return ['-c:a', 'aac', '-b:a', '${settings.audioBitrateKbps}k'];
+    }
     return [
       '-c:a', settings.audioFormat.ffmpegCodec,
       if (settings.audioFormat != AudioFormat.copy &&
@@ -163,4 +183,10 @@ class FfmpegService {
   Future<Process> spawn(List<String> args) {
     return Process.start(ffmpegPath, args);
   }
+
+  /// Renders the command as it is invoked, for the job log. Args with spaces are
+  /// quoted so the line can be copy-pasted to reproduce the run. This is for
+  /// display only -- the actual spawn passes [args] verbatim, not via a shell.
+  String displayCommand(List<String> args) =>
+      [ffmpegPath, ...args].map((a) => a.contains(' ') ? '"$a"' : a).join(' ');
 }
