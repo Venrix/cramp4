@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../models/encode_job.dart';
 import '../models/encode_settings.dart';
 import '../models/file_info.dart';
+import '../services/app_logger.dart';
 import '../services/ffmpeg_service.dart';
 import 'settings_provider.dart';
 
@@ -61,6 +62,9 @@ class EncodingProvider extends ChangeNotifier {
           settings.videoCodec != VideoCodec.copy &&
           settings.videoCodec.supportsTwoPass;
 
+      AppLogger.info('Encoding',
+          'Start (${useTargetSize ? 'two-pass' : 'single-pass'}): ${fileInfo.path} -> $outputPath');
+
       if (useTargetSize) {
         await _runTwoPass(fileInfo, settings, settingsConfig, outputPath, ffmpegSvc,
             trimStart, trimDuration, effectiveDurationSecs);
@@ -68,13 +72,22 @@ class EncodingProvider extends ChangeNotifier {
         await _runSinglePass(fileInfo, settings, outputPath, ffmpegSvc,
             trimStart, trimDuration, effectiveDurationSecs);
       }
+
+      if (_currentJob?.status == JobStatus.aborted) {
+        AppLogger.warn('Encoding', 'Aborted: $outputPath');
+      } else {
+        AppLogger.info('Encoding', 'Completed: $outputPath');
+      }
     } catch (e) {
       if (_currentJob?.status != JobStatus.aborted) {
+        AppLogger.error('Encoding', 'Failed ($outputPath): $e');
         _currentJob = _currentJob?.copyWith(
           status: JobStatus.failed,
           errorMessage: e.toString(),
         );
         notifyListeners();
+      } else {
+        AppLogger.warn('Encoding', 'Aborted: $outputPath');
       }
     }
   }

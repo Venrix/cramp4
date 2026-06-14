@@ -10,13 +10,19 @@ import 'providers/settings_provider.dart';
 import 'screens/encode_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/trim_screen.dart';
+import 'services/app_logger.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_tab_bar.dart';
 import 'widgets/bottom_action_bar.dart';
 import 'widgets/drop_zone.dart';
 import 'widgets/info_bar.dart';
 
-void main(List<String> args) async {
+void main(List<String> args) {
+  AppLogger.init();
+  AppLogger.runGuarded(() => _start(args));
+}
+
+Future<void> _start(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   final settingsProvider = SettingsProvider();
@@ -24,8 +30,10 @@ void main(List<String> args) async {
 
   final appState = AppStateProvider();
   await appState.init();
+  AppLogger.info('main', 'Startup complete (args: ${args.length})');
   if (args.isNotEmpty) {
     // Launched from context menu — load the file immediately
+    AppLogger.info('main', 'Opening file from launch arg: ${args.first}');
     unawaited(appState.loadFile(args.first, settingsProvider.effectiveFfprobePath, settingsProvider));
   }
 
