@@ -29,9 +29,13 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
@@ -55,9 +59,13 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       ..._videoFilterArgs(settings),
       '-c:v', settings.videoCodec.ffmpegCodec,
       '-b:v', '${videoBitrateKbps}k',
@@ -77,9 +85,13 @@ class FfmpegService {
   }) {
     return [
       '-y',
-      '-i', inputPath,
+      '-hwaccel', 'auto',
+      // Input-side seek: -ss/-t before -i so ffmpeg seeks (and HW-decodes) to
+      // the clip instead of decoding from 0:00 and discarding. Frame-accurate
+      // on the formats we target; keeps two-pass from re-scanning the whole file.
       if (trimStart > Duration.zero) ...[ '-ss', _fmtSecs(trimStart) ],
       if (trimDuration != null) ...[ '-t', _fmtSecs(trimDuration) ],
+      '-i', inputPath,
       if (settings.videoEnabled) ...[
         ..._videoFilterArgs(settings),
         '-c:v', settings.videoCodec.ffmpegCodec,
