@@ -154,6 +154,48 @@ void main() {
     });
   });
 
+  group('video codec handling for single-pass jobs', () {
+    test('buildSinglePassArgs omits -crf and its value for a Copy video codec', () {
+      final settings = EncodeSettings(
+        videoEnabled: true,
+        videoCodec: VideoCodec.copy,
+        audioEnabled: true,
+        audioFormat: AudioFormat.copy,
+      );
+
+      final args = svc.buildSinglePassArgs(
+        inputPath: 'in.mp4',
+        outputPath: 'out.mp4',
+        settings: settings,
+      );
+
+      expect(args, isNot(contains('-crf')));
+      // The orphaned '23' (CRF value) must not leak in as a positional arg —
+      // ffmpeg would treat it as an output filename.
+      expect(args, isNot(contains('23')));
+      final videoCodecIndex = args.indexOf('-c:v');
+      expect(args[videoCodecIndex + 1], 'copy');
+      expect(args[videoCodecIndex + 2], '-c:a');
+    });
+
+    test('buildSinglePassArgs emits -crf 23 together for a re-encode codec', () {
+      final settings = EncodeSettings(
+        videoEnabled: true,
+        videoCodec: VideoCodec.h264,
+        audioEnabled: true,
+        audioFormat: AudioFormat.copy,
+      );
+
+      final args = svc.buildSinglePassArgs(
+        inputPath: 'in.mp4',
+        outputPath: 'out.mp4',
+        settings: settings,
+      );
+
+      expect(args, containsAllInOrder(['-crf', '23']));
+    });
+  });
+
   group('audio handling for single-pass jobs', () {
     test('buildSinglePassArgs honors a Copy audio choice', () {
       final settings = EncodeSettings(
