@@ -71,7 +71,7 @@ class FfmpegService {
       '-b:v', '${videoBitrateKbps}k',
       '-pass', '2',
       '-passlogfile', passlogFile,
-      ..._audioArgs(settings),
+      ..._audioArgs(settings, reencodeCopyAsAac: true),
       outputPath,
     ];
   }
@@ -113,8 +113,16 @@ class FfmpegService {
     return ['-vf', filter];
   }
 
-  List<String> _audioArgs(EncodeSettings settings) {
+  List<String> _audioArgs(EncodeSettings settings,
+      {bool reencodeCopyAsAac = false}) {
     if (!settings.audioEnabled) return ['-an'];
+    // Two-pass/size-target jobs can't `-c:a copy`: copy + input seek fails at
+    // mux, and a copied track ignores the size budget (overshooting the target).
+    // Re-encode to AAC at the budgeted bitrate, which calculateVideoBitrateKbps
+    // already subtracts, so the target stays accurate.
+    if (reencodeCopyAsAac && settings.audioFormat == AudioFormat.copy) {
+      return ['-c:a', 'aac', '-b:a', '${settings.audioBitrateKbps}k'];
+    }
     return [
       '-c:a', settings.audioFormat.ffmpegCodec,
       if (settings.audioFormat != AudioFormat.copy &&

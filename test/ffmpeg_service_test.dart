@@ -96,4 +96,56 @@ void main() {
       expect(args, containsAllInOrder(['-hwaccel', 'auto']));
     });
   });
+
+  group('audio handling for size-targeted (two-pass) jobs', () {
+    test('buildPass2Args re-encodes Copy audio as AAC at the budgeted bitrate', () {
+      final args = svc.buildPass2Args(
+        inputPath: 'in.mp4',
+        outputPath: 'out.mp4',
+        settings: sizeTargetSettings(audio: AudioFormat.copy),
+        videoBitrateKbps: 1000,
+        passlogFile: 'log',
+        fileInfo: fileInfo,
+      );
+
+      final codecIndex = args.indexOf('-c:a');
+      expect(codecIndex, greaterThanOrEqualTo(0));
+      expect(args[codecIndex + 1], 'aac');
+      expect(args, containsAllInOrder(['-b:a', '128k']));
+    });
+
+    test('buildPass2Args honors an explicit non-copy audio choice', () {
+      final args = svc.buildPass2Args(
+        inputPath: 'in.mp4',
+        outputPath: 'out.mp4',
+        settings: sizeTargetSettings(audio: AudioFormat.opus),
+        videoBitrateKbps: 1000,
+        passlogFile: 'log',
+        fileInfo: fileInfo,
+      );
+
+      final codecIndex = args.indexOf('-c:a');
+      expect(args[codecIndex + 1], 'libopus');
+    });
+  });
+
+  group('audio handling for single-pass jobs', () {
+    test('buildSinglePassArgs honors a Copy audio choice', () {
+      final settings = EncodeSettings(
+        videoEnabled: true,
+        videoCodec: VideoCodec.h264,
+        audioEnabled: true,
+        audioFormat: AudioFormat.copy,
+      );
+
+      final args = svc.buildSinglePassArgs(
+        inputPath: 'in.mp4',
+        outputPath: 'out.mp4',
+        settings: settings,
+      );
+
+      final codecIndex = args.indexOf('-c:a');
+      expect(args[codecIndex + 1], 'copy');
+    });
+  });
 }
