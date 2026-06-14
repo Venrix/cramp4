@@ -20,6 +20,7 @@ class SettingsProvider extends ChangeNotifier {
   static const _keyDefaultResolution = 'default_resolution';
   static const _keyDefaultAudioFormat = 'default_audio_format';
   static const _keyDefaultAudioBitrate = 'default_audio_bitrate';
+  static const _keyQueueHeight = 'queue_height';
   static const _shellKey =
       r'HKCU\Software\Classes\*\shell\OpenInCramp4';
 
@@ -35,6 +36,7 @@ class SettingsProvider extends ChangeNotifier {
   ResolutionScale _defaultResolution = ResolutionScale.original;
   AudioFormat _defaultAudioFormat = AudioFormat.copy;
   int _defaultAudioBitrate = 128;
+  double _queueHeight = 220;
 
   String get ffmpegPath => _ffmpegPath;
   String get outputDir => _outputDir;
@@ -48,6 +50,7 @@ class SettingsProvider extends ChangeNotifier {
   ResolutionScale get defaultResolution => _defaultResolution;
   AudioFormat get defaultAudioFormat => _defaultAudioFormat;
   int get defaultAudioBitrate => _defaultAudioBitrate;
+  double get queueHeight => _queueHeight;
 
   bool get contextMenuSupported => Platform.isWindows;
   String get effectiveFfmpegPath => _ffmpegPath.isEmpty ? 'ffmpeg' : _ffmpegPath;
@@ -79,6 +82,7 @@ class SettingsProvider extends ChangeNotifier {
     _defaultAudioFormat = AudioFormat.values.byName(
         prefs.getString(_keyDefaultAudioFormat) ?? AudioFormat.copy.name);
     _defaultAudioBitrate = prefs.getInt(_keyDefaultAudioBitrate) ?? 128;
+    _queueHeight = prefs.getDouble(_keyQueueHeight) ?? 220;
     if (Platform.isWindows) await _checkContextMenuStatus();
     notifyListeners();
   }
@@ -238,5 +242,13 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_keyDefaultAudioBitrate, v);
+  }
+
+  // No notifyListeners: EncodeScreen drives the live drag from its own local
+  // state and only persists here on drag-end, so a rebuild would be redundant.
+  Future<void> setQueueHeight(double v) async {
+    _queueHeight = v;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyQueueHeight, v);
   }
 }
