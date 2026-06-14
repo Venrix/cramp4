@@ -37,7 +37,9 @@ class _EncodeScreenState extends State<EncodeScreen> {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                // Bottom gap is owned by the resize handle so its grip can sit
+                // centered in the seam between the cards.
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: const [
@@ -49,13 +51,19 @@ class _EncodeScreenState extends State<EncodeScreen> {
               ),
             ),
             _ResizeHandle(
+              // Accumulate from the live field, not the build-time `height`:
+              // mouse-move events outpace frames, so several updates land per
+              // frame and must add up rather than each recompute from a stale base.
               onDragUpdate: (dy) {
                 setState(() {
+                  final base = _queueHeight ?? settings.queueHeight;
                   _queueHeight =
-                      (height - dy).clamp(_minQueueHeight, maxQueueHeight);
+                      (base - dy).clamp(_minQueueHeight, maxQueueHeight);
                 });
               },
-              onDragEnd: () => settings.setQueueHeight(height),
+              onDragEnd: () {
+                if (_queueHeight != null) settings.setQueueHeight(_queueHeight!);
+              },
             ),
             SizedBox(
               height: height,
@@ -96,7 +104,7 @@ class _ResizeHandleState extends State<_ResizeHandle> {
         onVerticalDragUpdate: (details) => widget.onDragUpdate(details.delta.dy),
         onVerticalDragEnd: (_) => widget.onDragEnd(),
         child: Container(
-          height: 8,
+          height: 20,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           alignment: Alignment.center,
           child: Container(
