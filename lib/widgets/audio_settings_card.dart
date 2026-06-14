@@ -23,7 +23,7 @@ class AudioSettingsCard extends StatelessWidget {
         (fileInfo?.audioBitrate ?? 0) ~/ 1000);
 
     return Card(
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
