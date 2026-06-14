@@ -129,6 +129,31 @@ void main() {
     });
   });
 
+  group('displayCommand', () {
+    test('prepends the ffmpeg path and quotes args containing spaces', () {
+      const svc = FfmpegService(ffmpegPath: 'ffmpeg');
+      final cmd = svc.displayCommand([
+        '-i',
+        'C:/Shadowplay Videos/clip.mp4',
+        '-c:v',
+        'libx264',
+        'C:/out/clip_cramp4.mp4',
+      ]);
+
+      expect(
+        cmd,
+        'ffmpeg -i "C:/Shadowplay Videos/clip.mp4" -c:v libx264 C:/out/clip_cramp4.mp4',
+      );
+    });
+
+    test('quotes the ffmpeg path itself when it contains spaces', () {
+      const svc = FfmpegService(ffmpegPath: r'C:\Program Files\ffmpeg\ffmpeg.exe');
+      final cmd = svc.displayCommand(['-version']);
+
+      expect(cmd, r'"C:\Program Files\ffmpeg\ffmpeg.exe" -version');
+    });
+  });
+
   group('audio handling for single-pass jobs', () {
     test('buildSinglePassArgs honors a Copy audio choice', () {
       final settings = EncodeSettings(
