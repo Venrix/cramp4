@@ -71,6 +71,20 @@ void main() {
     expect(queueBoxHeight(tester), 140);
   });
 
+  testWidgets('accumulates multiple updates within a single frame', (tester) async {
+    await pumpScreen(tester);
+    // No pump between moves: mimics several mouse-move events arriving before
+    // the next frame, which must add up rather than overwrite each other.
+    final gesture = await tester
+        .startGesture(tester.getCenter(find.byKey(const Key('queueResizeHandle'))));
+    await gesture.moveBy(const Offset(0, -20));
+    await gesture.moveBy(const Offset(0, -20));
+    await gesture.moveBy(const Offset(0, -20));
+    await gesture.up();
+    await tester.pump();
+    expect(queueBoxHeight(tester), 280);
+  });
+
   testWidgets('persists the height on drag end', (tester) async {
     final settings = await pumpScreen(tester);
     await dragHandle(tester, -30);
