@@ -36,18 +36,22 @@ class _ProcessQueueCardState extends State<ProcessQueueCard> {
   void _updatePinned() {
     if (!_scrollController.hasClients) return;
     final position = _scrollController.position;
+    // maxScrollExtent throws until the viewport has reported its dimensions.
+    if (!position.hasContentDimensions) return;
     _pinnedToBottom = position.pixels >= position.maxScrollExtent - 24;
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        );
-      }
+      if (!_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      // maxScrollExtent is null until the viewport reports dimensions.
+      if (!position.hasContentDimensions) return;
+      _scrollController.animateTo(
+        position.maxScrollExtent,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
     });
   }
 
