@@ -188,6 +188,9 @@ class EncodingProvider extends ChangeNotifier {
     _process = await ffmpegSvc.spawn(args);
 
     final logLines = List<String>.from(_currentJob?.logLines ?? []);
+    logLines.add('\$ ${ffmpegSvc.displayCommand(args)}');
+    _currentJob = _currentJob?.copyWith(logLines: List<String>.from(logLines));
+    notifyListeners();
 
     _process!.stderr
         .transform(utf8.decoder)

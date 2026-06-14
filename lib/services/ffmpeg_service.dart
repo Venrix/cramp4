@@ -183,4 +183,10 @@ class FfmpegService {
   Future<Process> spawn(List<String> args) {
     return Process.start(ffmpegPath, args);
   }
+
+  /// Renders the command as it is invoked, for the job log. Args with spaces are
+  /// quoted so the line can be copy-pasted to reproduce the run. This is for
+  /// display only -- the actual spawn passes [args] verbatim, not via a shell.
+  String displayCommand(List<String> args) =>
+      [ffmpegPath, ...args].map((a) => a.contains(' ') ? '"$a"' : a).join(' ');
 }
