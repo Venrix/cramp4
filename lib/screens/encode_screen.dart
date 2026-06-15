@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_state_provider.dart';
+import '../providers/settings_provider.dart';
+import '../services/ffmpeg_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/audio_settings_card.dart';
 import '../widgets/filename_template_field.dart';
@@ -17,8 +19,8 @@ class EncodeScreen extends StatefulWidget {
 
 class _EncodeScreenState extends State<EncodeScreen> {
   // Settings shrink-wrap to content, capped here. Tall enough for the output
-  // filename card plus the video/audio cards below it.
-  static const double _maxSettingsHeight = 480;
+  // filename card (with its preview line) plus the video/audio cards below it.
+  static const double _maxSettingsHeight = 560;
   // Queue floor; below this the page scrolls instead.
   static const double _minQueueHeight = 220;
 
@@ -87,6 +89,20 @@ class _SettingsPanelsState extends State<_SettingsPanels> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppStateProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final resolvedTemplate = const FfmpegService()
+        .resolveTemplateDefault(_templateController.text, settings.filenameTemplate);
+    final preview = previewOutputName(
+      template: resolvedTemplate,
+      fileInfo: appState.fileInfo,
+      settings: appState.settings,
+      prefix: settings.outputPrefix,
+      suffix: settings.outputSuffix,
+      trimStart: appState.trimStart,
+      trimEnd: appState.trimEnd,
+    );
+
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: widget.maxHeight),
       child: SingleChildScrollView(
@@ -119,9 +135,21 @@ class _SettingsPanelsState extends State<_SettingsPanels> {
                     FilenameTemplateField(
                       controller: _templateController,
                       presets: kEncodeTemplatePresets,
-                      onChanged: context
-                          .read<AppStateProvider>()
-                          .setFilenameTemplateOverride,
+                      onChanged: (v) {
+                        context
+                            .read<AppStateProvider>()
+                            .setFilenameTemplateOverride(v);
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Output: $preview',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

@@ -40,9 +40,8 @@ class EncodingProvider extends ChangeNotifier {
 
     final ffmpegSvc = FfmpegService(ffmpegPath: settingsConfig.effectiveFfmpegPath);
     // {templatedefault} (encode-tab override) inherits the Settings template.
-    final resolvedTemplate = filenameTemplate.replaceAll(
-        RegExp(r'\{templatedefault\}', caseSensitive: false),
-        settingsConfig.filenameTemplate);
+    final resolvedTemplate = ffmpegSvc.resolveTemplateDefault(
+        filenameTemplate, settingsConfig.filenameTemplate);
     var outputPath = ffmpegSvc.buildOutputPath(
       inputPath: fileInfo.path,
       outputDir: settingsConfig.outputDir,
@@ -53,7 +52,7 @@ class EncodingProvider extends ChangeNotifier {
       trimStart: trimStart,
       trimEnd: trimEnd,
       now: DateTime.now(),
-      resLabel: _resLabel(settings, fileInfo),
+      resLabel: resolutionLabel(settings, fileInfo.resolution),
     );
     // Never silently overwrite an earlier export of the same clip.
     outputPath =
@@ -103,19 +102,6 @@ class EncodingProvider extends ChangeNotifier {
         AppLogger.warn('Encoding', 'Aborted: $outputPath');
       }
     }
-  }
-
-  // Height label for the {res} token, e.g. "1080p". Uses the chosen scale when
-  // one is set, otherwise derives from the source resolution ("WxH").
-  String _resLabel(EncodeSettings settings, FileInfo fileInfo) {
-    final maxH = settings.resolutionScale.maxHeight;
-    if (maxH != null) return '${maxH}p';
-    final parts = fileInfo.resolution.split(RegExp(r'[x×]'));
-    if (parts.length == 2) {
-      final h = int.tryParse(parts[1].trim());
-      if (h != null) return '${h}p';
-    }
-    return '';
   }
 
   Future<void> _runSinglePass(

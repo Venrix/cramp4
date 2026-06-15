@@ -114,6 +114,21 @@ extension ResolutionScaleExt on ResolutionScale {
       };
 }
 
+// Height label for the {res} filename token, e.g. "1080p". Uses the chosen
+// downscale when set, otherwise derives from the source resolution ("WxH").
+String resolutionLabel(EncodeSettings settings, String? sourceResolution) {
+  final maxH = settings.resolutionScale.maxHeight;
+  if (maxH != null) return '${maxH}p';
+  if (sourceResolution != null) {
+    final parts = sourceResolution.split(RegExp(r'[x×]'));
+    if (parts.length == 2) {
+      final h = int.tryParse(parts[1].trim());
+      if (h != null) return '${h}p';
+    }
+  }
+  return '';
+}
+
 class EncodeSettings {
   bool videoEnabled;
   double? targetSizeMB;

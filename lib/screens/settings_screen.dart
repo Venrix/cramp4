@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/encode_settings.dart';
+import '../providers/app_state_provider.dart';
 import '../providers/settings_provider.dart';
-import '../services/ffmpeg_service.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/filename_template_field.dart';
@@ -59,7 +59,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.read<SettingsProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final appState = context.watch<AppStateProvider>();
 
     return ListView(
       padding: const EdgeInsets.all(12),
@@ -202,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Example: ${_templateExample(settings)}',
+                  'Example: ${_templateExample(settings, appState)}',
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 11,
@@ -632,18 +633,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       );
 
-  // Live preview of the current template using stand-in sample values.
-  String _templateExample(SettingsProvider settings) =>
-      const FfmpegService().renderFilenameTemplate(
+  // Live preview of the current template — real file/trim when one is loaded,
+  // otherwise sample values.
+  String _templateExample(SettingsProvider settings, AppStateProvider appState) =>
+      previewOutputName(
         template: _templateController.text,
-        inputPath: 'my_video.mp4',
+        fileInfo: appState.fileInfo,
+        settings: appState.settings,
         prefix: settings.outputPrefix,
         suffix: settings.outputSuffix,
-        ext: 'mp4',
-        trimStart: Duration.zero,
-        trimEnd: const Duration(minutes: 1, seconds: 23),
-        now: DateTime.now(),
-        resLabel: '1080p',
+        trimStart: appState.trimStart,
+        trimEnd: appState.trimEnd,
       );
 
   Widget _fieldLabel(String text) => Text(

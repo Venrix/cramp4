@@ -1,8 +1,39 @@
 import 'package:flutter/material.dart';
 
+import '../models/encode_settings.dart';
+import '../models/file_info.dart';
+import '../services/ffmpeg_service.dart';
 import '../theme/app_theme.dart';
 import 'app_menu_style.dart';
 import 'hover_text_field.dart';
+
+/// Renders the filename a template would produce, for live previews. Uses the
+/// loaded file + trim when present, otherwise stand-in sample values. [template]
+/// must already have {templatedefault} resolved.
+String previewOutputName({
+  required String template,
+  required FileInfo? fileInfo,
+  required EncodeSettings settings,
+  required String prefix,
+  required String suffix,
+  required Duration trimStart,
+  required Duration trimEnd,
+}) {
+  final hasFile = fileInfo != null;
+  final ext = settings.videoEnabled ? 'mp4' : settings.audioFormat.extension;
+  final res = resolutionLabel(settings, fileInfo?.resolution);
+  return const FfmpegService().renderFilenameTemplate(
+    template: template,
+    inputPath: hasFile ? fileInfo.path : 'my_video.mp4',
+    prefix: prefix,
+    suffix: suffix,
+    ext: ext,
+    trimStart: hasFile ? trimStart : Duration.zero,
+    trimEnd: hasFile ? trimEnd : const Duration(minutes: 1, seconds: 23),
+    now: DateTime.now(),
+    resLabel: res.isEmpty ? '1080p' : res,
+  );
+}
 
 class TemplatePreset {
   final String label;

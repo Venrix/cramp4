@@ -206,6 +206,12 @@ class FfmpegService {
     return '$dir/$name';
   }
 
+  // Replaces the encode-tab {templatedefault} meta-token with the Settings
+  // template, so the override inherits whatever Settings currently holds.
+  String resolveTemplateDefault(String template, String settingsTemplate) =>
+      template.replaceAll(
+          RegExp(r'\{templatedefault\}', caseSensitive: false), settingsTemplate);
+
   // Expands a filename template into a sanitized filename (no directory).
   // Tokens are case-insensitive; unknown {tokens} are left literal. If the
   // template has no {ext} token the extension is auto-appended, so plain
