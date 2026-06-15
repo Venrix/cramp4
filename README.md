@@ -17,11 +17,11 @@ Runs on **Windows** and **Linux**.
 - **Resolution scaling** — downscale to 4K, 1440p, 1080p, 720p, 480p, or 360p
 - **Audio settings** — choose format (AAC, MP3, Opus, FLAC) and bitrate, or mute
 - **Trim** — set in/out points on a built-in video player and encode only the selected range; Space to play/pause
-- **Filename templates** — name exports with tokens like `{filename}`, `{prefix}`, `{suffix}`, `{cut_from}`, `{cut_to}`, `{res}`, and `{date}` (case-insensitive), with built-in presets including a LosslessCut-style format. Set a global default in Settings with a live example, or override it per-export in the Encode tab. Duplicate names automatically get ` (1)`, ` (2)`… so different trims of the same clip never overwrite each other
+- **Filename templates** — name exports with tokens like `{filename}`, `{cut_from}`, `{cut_to}`, `{res}`, and `{date}` (case-insensitive), with built-in presets including a LosslessCut-style format. Set a global default in Settings with a live example, or override it per-export in the Encode tab. Duplicate names automatically get ` (1)`, ` (2)`… so different trims of the same clip never overwrite each other
 - **Live progress** — real-time progress bar, time remaining, and ffmpeg log output
 - **Drag & drop** — drag a video file directly onto the window
 - **Preserves timestamps** — output file keeps the original creation and modification dates
-- **Settings** — override ffmpeg binary path, output folder, filename prefix/suffix, and filename template
+- **Settings** — override ffmpeg binary path, output folder, and the filename template
 - **Shell integration** — right-click context menu entry for video files (Windows only)
 - **In-app updates** — manually check for and install new releases (Windows installer builds only, not portable)
 
