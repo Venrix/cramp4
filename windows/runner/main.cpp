@@ -26,7 +26,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 780);
+  // Tall enough that the settings panel + full 220px min-height process queue
+  // fit without scrolling (chrome ~154px + settings ~446px + queue 220px,
+  // plus window non-client area).
+  Win32Window::Size size(1280, 910);
   if (!window.Create(L"cramp4", origin, size)) {
     return EXIT_FAILURE;
   }
