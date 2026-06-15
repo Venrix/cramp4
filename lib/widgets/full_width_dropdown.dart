@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'app_menu_style.dart';
 
 class FullWidthDropdown<T> extends StatefulWidget {
   final T value;
@@ -23,64 +24,92 @@ class FullWidthDropdown<T> extends StatefulWidget {
 }
 
 class _FullWidthDropdownState<T> extends State<FullWidthDropdown<T>> {
+  final GlobalKey _anchorKey = GlobalKey();
   bool _hovered = false;
-  bool _focused = false;
+  bool _open = false;
+  // Menu width tracks the anchor, like DropdownButton did. Measured rather than
+  // via LayoutBuilder, which can't sit under the IntrinsicHeight in the cards.
+  double? _menuWidth;
+
+  String _label(T v) => widget.originalValue == v
+      ? '${widget.labelOf(v)} (Original)'
+      : widget.labelOf(v);
+
+  void _measureAnchor() {
+    final box = _anchorKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    if (_menuWidth == null || (box.size.width - _menuWidth!).abs() > 0.5) {
+      setState(() => _menuWidth = box.size.width);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Focus(
-        onFocusChange: (focused) => setState(() => _focused = focused),
-        skipTraversal: true,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          decoration: BoxDecoration(
-            color: AppTheme.background,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: _focused
-                  ? AppTheme.accent
-                  : _hovered
-                      ? AppTheme.surfaceVariant
-                      : Colors.transparent,
-              width: _focused ? 1.5 : 1,
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureAnchor());
+
+    return MenuAnchor(
+      style: kAppMenuStyle,
+      onOpen: () => setState(() => _open = true),
+      onClose: () => setState(() => _open = false),
+      builder: (context, controller, _) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: () => controller.isOpen ? controller.close() : controller.open(),
+          child: AnimatedContainer(
+            key: _anchorKey,
+            duration: const Duration(milliseconds: 100),
+            decoration: BoxDecoration(
+              color: AppTheme.background,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: _open
+                    ? AppTheme.accent
+                    : _hovered
+                        ? AppTheme.surfaceVariant
+                        : Colors.transparent,
+                width: _open ? 1.5 : 1,
+              ),
             ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              value: widget.value,
-              isExpanded: true,
-              dropdownColor: AppTheme.background,
-              borderRadius: BorderRadius.circular(8),
-              focusColor: Colors.transparent,
-              mouseCursor: SystemMouseCursors.click,
-              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
-              icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
-              items: widget.items
-                  .map((v) => DropdownMenuItem<T>(
-                        value: v,
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: Text(
-                              widget.originalValue == v
-                                  ? '${widget.labelOf(v)} (Original)'
-                                  : widget.labelOf(v),
-                            ),
-                          ),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: widget.onChanged,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _label(widget.value),
+                    style: const TextStyle(
+                        color: AppTheme.textPrimary, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.keyboard_arrow_down,
+                    color: AppTheme.textSecondary),
+              ],
             ),
           ),
         ),
       ),
+      menuChildren: [
+        for (final v in widget.items)
+          MenuItemButton(
+            style: appMenuItemStyle(),
+            onPressed: () => widget.onChanged(v),
+            child: _menuLabel(v),
+          ),
+      ],
     );
+  }
+
+  Widget _menuLabel(T v) {
+    final text = Text(
+      _label(v),
+      style: TextStyle(
+        color: v == widget.value ? AppTheme.accent : AppTheme.textPrimary,
+        fontSize: 13,
+      ),
+    );
+    if (_menuWidth == null) return text;
+    return SizedBox(width: _menuWidth! - 24, child: text);
   }
 }

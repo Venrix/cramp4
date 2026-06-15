@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'app_menu_style.dart';
 import 'hover_text_field.dart';
 
 class TemplatePreset {
@@ -47,17 +48,7 @@ class FilenameTemplateField extends StatelessWidget {
     // Match FullWidthDropdown's flyout: background fill, radius 8, anchor width.
     return LayoutBuilder(
       builder: (context, constraints) => MenuAnchor(
-        style: MenuStyle(
-          backgroundColor: const WidgetStatePropertyAll(AppTheme.background),
-          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
-          padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 4)),
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: const BorderSide(color: AppTheme.surfaceVariant),
-            ),
-          ),
-        ),
+        style: kAppMenuStyle,
         builder: (context, menuController, _) => HoverTextField(
           controller: controller,
           onChanged: onChanged,
@@ -77,13 +68,7 @@ class FilenameTemplateField extends StatelessWidget {
         menuChildren: [
           for (final p in presets)
             MenuItemButton(
-              style: MenuItemButton.styleFrom(
-                foregroundColor: AppTheme.textPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ).copyWith(
-                mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
-                overlayColor: const WidgetStatePropertyAll(AppTheme.surfaceVariant),
-              ),
+              style: appMenuItemStyle(),
               onPressed: () {
                 controller.text = p.value;
                 onChanged(p.value);
