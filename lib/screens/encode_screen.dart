@@ -97,8 +97,6 @@ class _SettingsPanelsState extends State<_SettingsPanels> {
       template: resolvedTemplate,
       fileInfo: appState.fileInfo,
       settings: appState.settings,
-      prefix: settings.outputPrefix,
-      suffix: settings.outputSuffix,
       trimStart: appState.trimStart,
       trimEnd: appState.trimEnd,
     );

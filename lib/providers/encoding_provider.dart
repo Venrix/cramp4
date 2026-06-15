@@ -45,8 +45,6 @@ class EncodingProvider extends ChangeNotifier {
     var outputPath = ffmpegSvc.buildOutputPath(
       inputPath: fileInfo.path,
       outputDir: settingsConfig.outputDir,
-      prefix: settingsConfig.outputPrefix,
-      suffix: settingsConfig.outputSuffix,
       template: resolvedTemplate,
       settings: settings,
       trimStart: trimStart,

@@ -177,8 +177,6 @@ class FfmpegService {
   String buildOutputPath({
     required String inputPath,
     required String outputDir,
-    required String prefix,
-    required String suffix,
     required String template,
     required EncodeSettings settings,
     required Duration trimStart,
@@ -195,8 +193,6 @@ class FfmpegService {
     final name = renderFilenameTemplate(
       template: template,
       inputPath: inputPath,
-      prefix: prefix,
-      suffix: suffix,
       ext: ext,
       trimStart: trimStart,
       trimEnd: trimEnd,
@@ -215,12 +211,10 @@ class FfmpegService {
   // Expands a filename template into a sanitized filename (no directory).
   // Tokens are case-insensitive; unknown {tokens} are left literal. If the
   // template has no {ext} token the extension is auto-appended, so plain
-  // templates like "{prefix}{filename}{suffix}" still produce ".mp4".
+  // templates like "{filename}_cramp4" still produce ".mp4".
   String renderFilenameTemplate({
     required String template,
     required String inputPath,
-    required String prefix,
-    required String suffix,
     required String ext,
     required Duration trimStart,
     required Duration trimEnd,
@@ -235,8 +229,6 @@ class FfmpegService {
 
     final tokens = <String, String>{
       'filename': stem,
-      'prefix': prefix,
-      'suffix': suffix,
       'cut_from': _fmtClock(trimStart),
       'cut_to': _fmtClock(trimEnd),
       'ext': extWithDot,

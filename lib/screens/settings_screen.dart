@@ -23,8 +23,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _ffmpegController;
   late TextEditingController _outputDirController;
-  late TextEditingController _prefixController;
-  late TextEditingController _suffixController;
   late TextEditingController _templateController;
   late TextEditingController _blacklistController;
 
@@ -40,8 +38,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.read<SettingsProvider>();
     _ffmpegController = TextEditingController(text: settings.ffmpegPath);
     _outputDirController = TextEditingController(text: settings.outputDir);
-    _prefixController = TextEditingController(text: settings.outputPrefix);
-    _suffixController = TextEditingController(text: settings.outputSuffix);
     _templateController = TextEditingController(text: settings.filenameTemplate);
     _blacklistController = TextEditingController(text: settings.blacklistPattern);
   }
@@ -50,8 +46,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _ffmpegController.dispose();
     _outputDirController.dispose();
-    _prefixController.dispose();
-    _suffixController.dispose();
     _templateController.dispose();
     _blacklistController.dispose();
     super.dispose();
@@ -121,8 +115,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _cardHeader(Icons.folder_outlined, 'Output', onReset: () {
                   settings.resetOutput();
                   _outputDirController.clear();
-                  _prefixController.clear();
-                  _suffixController.text = '_cramp4';
                   _templateController.text =
                       SettingsProvider.defaultFilenameTemplate;
                   setState(() {});
@@ -154,44 +146,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _fieldLabel('Output Filename Prefix'),
-                          const SizedBox(height: 6),
-                          HoverTextField(
-                            controller: _prefixController,
-                            decoration: const InputDecoration(
-                              hintText: 'None',
-                            ),
-                            onChanged: settings.setOutputPrefix,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _fieldLabel('Output Filename Suffix'),
-                          const SizedBox(height: 6),
-                          HoverTextField(
-                            controller: _suffixController,
-                            decoration: const InputDecoration(
-                              hintText: '_cramp4',
-                            ),
-                            onChanged: settings.setOutputSuffix,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 _fieldLabel('Filename Template'),
                 const SizedBox(height: 6),
                 FilenameTemplateField(
@@ -203,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Example: ${_templateExample(settings, appState)}',
+                  'Example: ${_templateExample(appState)}',
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 11,
@@ -635,13 +589,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Live preview of the current template — real file/trim when one is loaded,
   // otherwise sample values.
-  String _templateExample(SettingsProvider settings, AppStateProvider appState) =>
-      previewOutputName(
+  String _templateExample(AppStateProvider appState) => previewOutputName(
         template: _templateController.text,
         fileInfo: appState.fileInfo,
         settings: appState.settings,
-        prefix: settings.outputPrefix,
-        suffix: settings.outputSuffix,
         trimStart: appState.trimStart,
         trimEnd: appState.trimEnd,
       );

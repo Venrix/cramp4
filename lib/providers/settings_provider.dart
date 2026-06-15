@@ -11,10 +11,10 @@ enum FolderSortDirection { ascending, descending }
 class SettingsProvider extends ChangeNotifier {
   static const _keyFfmpegPath = 'ffmpeg_path';
   static const _keyOutputDir = 'output_dir';
-  static const _keyOutputPrefix = 'output_prefix';
-  static const _keyOutputSuffix = 'output_suffix';
   static const _keyFilenameTemplate = 'output_filename_template';
-  static const defaultFilenameTemplate = '{prefix}{filename}{suffix}';
+  // The _cramp4 marker is baked into the default template, which keeps the
+  // folder blacklist working out of the box.
+  static const defaultFilenameTemplate = '{filename}_cramp4';
   static const _keyFolderSortField = 'folder_sort_field';
   static const _keyFolderSortDirection = 'folder_sort_direction';
   static const _keyBlacklistPattern = 'folder_blacklist_pattern';
@@ -27,8 +27,6 @@ class SettingsProvider extends ChangeNotifier {
 
   String _ffmpegPath = '';
   String _outputDir = '';
-  String _outputPrefix = '';
-  String _outputSuffix = '_cramp4';
   String _filenameTemplate = defaultFilenameTemplate;
   bool _contextMenuRegistered = false;
   FolderSortField _folderSortField = FolderSortField.dateCreated;
@@ -41,8 +39,6 @@ class SettingsProvider extends ChangeNotifier {
 
   String get ffmpegPath => _ffmpegPath;
   String get outputDir => _outputDir;
-  String get outputPrefix => _outputPrefix;
-  String get outputSuffix => _outputSuffix;
   String get filenameTemplate => _filenameTemplate;
   bool get contextMenuRegistered => _contextMenuRegistered;
   FolderSortField get folderSortField => _folderSortField;
@@ -69,8 +65,6 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _ffmpegPath = prefs.getString(_keyFfmpegPath) ?? '';
     _outputDir = prefs.getString(_keyOutputDir) ?? '';
-    _outputPrefix = prefs.getString(_keyOutputPrefix) ?? '';
-    _outputSuffix = prefs.getString(_keyOutputSuffix) ?? '_cramp4';
     _filenameTemplate =
         prefs.getString(_keyFilenameTemplate) ?? defaultFilenameTemplate;
     _folderSortField = FolderSortField.values.byName(
@@ -141,25 +135,11 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setString(_keyFfmpegPath, path);
   }
 
-  Future<void> setOutputPrefix(String prefix) async {
-    _outputPrefix = prefix;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyOutputPrefix, prefix);
-  }
-
   Future<void> setOutputDir(String dir) async {
     _outputDir = dir;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyOutputDir, dir);
-  }
-
-  Future<void> setOutputSuffix(String suffix) async {
-    _outputSuffix = suffix;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyOutputSuffix, suffix);
   }
 
   Future<void> setFilenameTemplate(String template) async {
@@ -192,14 +172,10 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> resetOutput() async {
     _outputDir = '';
-    _outputPrefix = '';
-    _outputSuffix = '_cramp4';
     _filenameTemplate = defaultFilenameTemplate;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyOutputDir);
-    await prefs.remove(_keyOutputPrefix);
-    await prefs.setString(_keyOutputSuffix, '_cramp4');
     await prefs.remove(_keyFilenameTemplate);
   }
 

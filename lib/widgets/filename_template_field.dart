@@ -14,8 +14,6 @@ String previewOutputName({
   required String template,
   required FileInfo? fileInfo,
   required EncodeSettings settings,
-  required String prefix,
-  required String suffix,
   required Duration trimStart,
   required Duration trimEnd,
 }) {
@@ -25,8 +23,6 @@ String previewOutputName({
   return const FfmpegService().renderFilenameTemplate(
     template: template,
     inputPath: hasFile ? fileInfo.path : 'my_video.mp4',
-    prefix: prefix,
-    suffix: suffix,
     ext: ext,
     trimStart: hasFile ? trimStart : Duration.zero,
     trimEnd: hasFile ? trimEnd : const Duration(minutes: 1, seconds: 23),
@@ -45,13 +41,13 @@ class TemplatePreset {
 /// case-insensitive). The encode tab prepends an "Inherit" entry, see
 /// [kEncodeTemplatePresets].
 const kFilenameTemplatePresets = <TemplatePreset>[
-  TemplatePreset('Default', '{prefix}{filename}{suffix}'),
+  TemplatePreset('Default', '{filename}_cramp4'),
   TemplatePreset('LosslessCut', '{filename}-{cut_from}-{cut_to}{seg_suffix}{ext}'),
   TemplatePreset(
-      'Prefix + resolution + range', '{prefix}{filename}_{res}_{cut_from}-{cut_to}{suffix}'),
+      'Resolution + range', '{filename}_{res}_{cut_from}-{cut_to}'),
   TemplatePreset('Trim range', '{filename}_{cut_from}-{cut_to}'),
   TemplatePreset('With date', '{filename}_{date}'),
-  TemplatePreset('With resolution', '{filename}_{res}{suffix}'),
+  TemplatePreset('With resolution', '{filename}_{res}'),
 ];
 
 /// Encode-tab presets: the default inherits whatever the Settings tab holds.
@@ -84,7 +80,7 @@ class FilenameTemplateField extends StatelessWidget {
           controller: controller,
           onChanged: onChanged,
           decoration: InputDecoration(
-            hintText: '{prefix}{filename}{suffix}',
+            hintText: '{filename}_cramp4',
             suffixIcon: IconButton(
               icon: const Icon(Icons.keyboard_arrow_down,
                   color: AppTheme.textSecondary),

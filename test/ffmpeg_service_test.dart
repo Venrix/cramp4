@@ -200,8 +200,6 @@ void main() {
     String render(
       String template, {
       String inputPath = 'clip.mp4',
-      String prefix = '',
-      String suffix = '',
       String ext = 'mp4',
       Duration trimStart = Duration.zero,
       Duration trimEnd = Duration.zero,
@@ -210,8 +208,6 @@ void main() {
         svc.renderFilenameTemplate(
           template: template,
           inputPath: inputPath,
-          prefix: prefix,
-          suffix: suffix,
           ext: ext,
           trimStart: trimStart,
           trimEnd: trimEnd,
@@ -221,9 +217,8 @@ void main() {
 
     test('default template auto-appends the extension', () {
       expect(
-        render('{prefix}{filename}{suffix}',
-            inputPath: 'C:/vids/clip.mp4', prefix: 'p_', suffix: '_s'),
-        'p_clip_s.mp4',
+        render('{filename}', inputPath: 'C:/vids/clip.mp4'),
+        'clip.mp4',
       );
     });
 
