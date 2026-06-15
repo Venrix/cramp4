@@ -22,5 +22,15 @@ ButtonStyle appMenuItemStyle() => MenuItemButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     ).copyWith(
       mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
-      overlayColor: const WidgetStatePropertyAll(AppTheme.surfaceVariant),
+      // No focus border — hover/focus/press all use the same grey overlay so the
+      // accent focus ring never flashes when the pointer leaves an item.
+      side: const WidgetStatePropertyAll(BorderSide.none),
+      overlayColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.hovered) ||
+            states.contains(WidgetState.focused) ||
+            states.contains(WidgetState.pressed)) {
+          return AppTheme.surfaceVariant;
+        }
+        return Colors.transparent;
+      }),
     );
