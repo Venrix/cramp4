@@ -54,7 +54,7 @@ static void my_application_activate(GApplication* application) {
 
   // Tall enough that the settings panel + full 220px min-height process queue
   // fit without scrolling.
-  gtk_window_set_default_size(window, 1280, 910);
+  gtk_window_set_default_size(window, 1280, 960);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
