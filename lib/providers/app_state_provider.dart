@@ -318,6 +318,11 @@ class AppStateProvider extends ChangeNotifier {
 
   void setAudioFormat(AudioFormat v) {
     _settings.audioFormat = v;
+    // Copy (passthrough) and FLAC (lossless) ignore bitrate — reset to default,
+    // mirroring how selecting AV1 clears the target size.
+    if (v == AudioFormat.copy || v == AudioFormat.flac) {
+      _settings.audioBitrateKbps = 128;
+    }
     notifyListeners();
     _save();
   }

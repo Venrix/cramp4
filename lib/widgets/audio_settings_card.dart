@@ -73,19 +73,8 @@ class AudioSettingsCard extends StatelessWidget {
                       onChanged: (v) => appState.setAudioFormat(v!),
                       originalValue: originalFormat,
                     ),
-                    if (settings.audioFormat != AudioFormat.copy &&
-                        settings.audioFormat != AudioFormat.flac) ...[
-                      const SizedBox(height: 14),
-                      _fieldLabel('AUDIO BITRATE'),
-                      const SizedBox(height: 6),
-                      FullWidthDropdown<int>(
-                        value: settings.audioBitrateKbps,
-                        items: _bitrateOptions,
-                        labelOf: (v) => '${v}k',
-                        onChanged: (v) => appState.setAudioBitrateKbps(v!),
-                        originalValue: originalBitrate,
-                      ),
-                    ],
+                    const SizedBox(height: 14),
+                    _bitrateSection(settings, appState, originalBitrate),
                   ],
                 ),
               ),
@@ -95,6 +84,71 @@ class AudioSettingsCard extends StatelessWidget {
       ),
     );
   }
+
+  // Bitrate doesn't apply to Copy (passthrough) or FLAC (lossless). Mirror the
+  // video card's target-size behaviour: keep the field in place, grey it out.
+  Widget _bitrateSection(
+      EncodeSettings settings, AppStateProvider appState, int? originalBitrate) {
+    final disabled = settings.audioFormat == AudioFormat.copy ||
+        settings.audioFormat == AudioFormat.flac;
+    Widget content = IgnorePointer(
+      ignoring: disabled,
+      child: AnimatedOpacity(
+        opacity: disabled ? 0.35 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _fieldLabel('AUDIO BITRATE'),
+            const SizedBox(height: 6),
+            // Disabled formats have no bitrate — show a placeholder dash instead
+            // of a stale value, mirroring the empty target-size field for AV1.
+            if (disabled)
+              _placeholderField('—')
+            else
+              FullWidthDropdown<int>(
+                value: _bitrateOptions.contains(settings.audioBitrateKbps)
+                    ? settings.audioBitrateKbps
+                    : 128,
+                items: _bitrateOptions,
+                labelOf: (v) => '${v}k',
+                onChanged: (v) => appState.setAudioBitrateKbps(v!),
+                originalValue: originalBitrate,
+              ),
+          ],
+        ),
+      ),
+    );
+    if (disabled) {
+      content = Tooltip(
+        message: settings.audioFormat == AudioFormat.flac
+            ? 'FLAC is lossless — bitrate not configurable'
+            : 'Copy passes the source audio through — bitrate not configurable',
+        child: content,
+      );
+    }
+    return content;
+  }
+
+  // Static stand-in styled like a FullWidthDropdown trigger, for disabled state.
+  Widget _placeholderField(String text) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+          ],
+        ),
+      );
 
   Widget _fieldLabel(String text) => Text(
         text,
