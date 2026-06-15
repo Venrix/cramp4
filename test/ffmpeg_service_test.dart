@@ -217,14 +217,14 @@ void main() {
 
     test('default template auto-appends the extension', () {
       expect(
-        render('{filename}', inputPath: 'C:/vids/clip.mp4'),
-        'clip.mp4',
+        render('{filename}_cramp4', inputPath: 'C:/vids/clip.mp4'),
+        'clip_cramp4.mp4',
       );
     });
 
     test('LosslessCut template formats cut times as HH.MM.SS.mmm', () {
       expect(
-        render('{filename}-{cut_from}-{cut_to}{seg_suffix}{ext}',
+        render('{filename}-{cut_from}-{cut_to}',
             trimStart: const Duration(milliseconds: 6881),
             trimEnd: const Duration(milliseconds: 82640)),
         'clip-00.00.06.881-00.01.22.640.mp4',
@@ -232,11 +232,11 @@ void main() {
     });
 
     test('tokens are case-insensitive', () {
-      expect(render('{FILENAME}{EXT}', inputPath: 'clip.mkv'), 'clip.mp4');
+      expect(render('{FILENAME}', inputPath: 'clip.mkv'), 'clip.mp4');
     });
 
-    test('explicit {ext} is not double-appended', () {
-      final name = render('{filename}{ext}');
+    test('the extension is always appended', () {
+      final name = render('{filename}');
       expect(name, 'clip.mp4');
       expect('.mp4'.allMatches(name).length, 1);
     });

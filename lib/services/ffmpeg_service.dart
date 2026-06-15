@@ -208,10 +208,9 @@ class FfmpegService {
       template.replaceAll(
           RegExp(r'\{templatedefault\}', caseSensitive: false), settingsTemplate);
 
-  // Expands a filename template into a sanitized filename (no directory).
-  // Tokens are case-insensitive; unknown {tokens} are left literal. If the
-  // template has no {ext} token the extension is auto-appended, so plain
-  // templates like "{filename}_cramp4" still produce ".mp4".
+  // Expands a filename template into a sanitized filename (no directory). Tokens
+  // are case-insensitive; unknown {tokens} are left literal. The extension is
+  // always appended, so templates like "{filename}_cramp4" produce ".mp4".
   String renderFilenameTemplate({
     required String template,
     required String inputPath,
@@ -231,23 +230,18 @@ class FfmpegService {
       'filename': stem,
       'cut_from': _fmtClock(trimStart),
       'cut_to': _fmtClock(trimEnd),
-      'ext': extWithDot,
       'res': resLabel,
       'date': _fmtDate(now),
-      'seg_suffix': '',
     };
-
-    final hasExt = RegExp(r'\{ext\}', caseSensitive: false).hasMatch(template);
 
     var name = template.replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) {
       final value = tokens[m.group(1)!.toLowerCase()];
       return value ?? m.group(0)!;
     });
 
-    if (!hasExt) name = '$name$extWithDot';
     name = _sanitizeFilename(name);
-    if (name.isEmpty) name = _sanitizeFilename('$stem$extWithDot');
-    return name;
+    if (name.isEmpty) name = _sanitizeFilename(stem);
+    return '$name$extWithDot';
   }
 
   // Returns [path] if free, else inserts " (n)" before the extension,

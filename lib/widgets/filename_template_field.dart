@@ -42,7 +42,7 @@ class TemplatePreset {
 /// [kEncodeTemplatePresets].
 const kFilenameTemplatePresets = <TemplatePreset>[
   TemplatePreset('Default', '{filename}_cramp4'),
-  TemplatePreset('LosslessCut', '{filename}-{cut_from}-{cut_to}{seg_suffix}{ext}'),
+  TemplatePreset('LosslessCut', '{filename}-{cut_from}-{cut_to}'),
   TemplatePreset(
       'Resolution + range', '{filename}_{res}_{cut_from}-{cut_to}'),
   TemplatePreset('Trim range', '{filename}_{cut_from}-{cut_to}'),
