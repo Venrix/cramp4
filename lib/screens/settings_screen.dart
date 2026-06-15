@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 
 import '../models/encode_settings.dart';
 import '../providers/settings_provider.dart';
+import '../services/ffmpeg_service.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/filename_template_field.dart';
 import '../widgets/full_width_dropdown.dart';
 import '../widgets/hover_text_field.dart';
 
@@ -23,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _outputDirController;
   late TextEditingController _prefixController;
   late TextEditingController _suffixController;
+  late TextEditingController _templateController;
   late TextEditingController _blacklistController;
 
   UpdateInfo? _updateInfo;
@@ -39,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _outputDirController = TextEditingController(text: settings.outputDir);
     _prefixController = TextEditingController(text: settings.outputPrefix);
     _suffixController = TextEditingController(text: settings.outputSuffix);
+    _templateController = TextEditingController(text: settings.filenameTemplate);
     _blacklistController = TextEditingController(text: settings.blacklistPattern);
   }
 
@@ -48,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _outputDirController.dispose();
     _prefixController.dispose();
     _suffixController.dispose();
+    _templateController.dispose();
     _blacklistController.dispose();
     super.dispose();
   }
@@ -117,6 +122,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _outputDirController.clear();
                   _prefixController.clear();
                   _suffixController.text = '_cramp4';
+                  _templateController.text =
+                      SettingsProvider.defaultFilenameTemplate;
+                  setState(() {});
                 }),
                 const SizedBox(height: 16),
                 _fieldLabel('Output Folder'),
@@ -181,6 +189,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                _fieldLabel('Filename Template'),
+                const SizedBox(height: 6),
+                FilenameTemplateField(
+                  controller: _templateController,
+                  onChanged: (v) {
+                    settings.setFilenameTemplate(v);
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Example: ${_templateExample(settings)}',
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -604,6 +630,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ],
+      );
+
+  // Live preview of the current template using stand-in sample values.
+  String _templateExample(SettingsProvider settings) =>
+      const FfmpegService().renderFilenameTemplate(
+        template: _templateController.text,
+        inputPath: 'my_video.mp4',
+        prefix: settings.outputPrefix,
+        suffix: settings.outputSuffix,
+        ext: 'mp4',
+        trimStart: Duration.zero,
+        trimEnd: const Duration(minutes: 1, seconds: 23),
+        now: DateTime.now(),
+        resLabel: '1080p',
       );
 
   Widget _fieldLabel(String text) => Text(

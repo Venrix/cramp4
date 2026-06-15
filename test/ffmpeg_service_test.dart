@@ -196,6 +196,90 @@ void main() {
     });
   });
 
+  group('filename template', () {
+    String render(
+      String template, {
+      String inputPath = 'clip.mp4',
+      String prefix = '',
+      String suffix = '',
+      String ext = 'mp4',
+      Duration trimStart = Duration.zero,
+      Duration trimEnd = Duration.zero,
+      String resLabel = '',
+    }) =>
+        svc.renderFilenameTemplate(
+          template: template,
+          inputPath: inputPath,
+          prefix: prefix,
+          suffix: suffix,
+          ext: ext,
+          trimStart: trimStart,
+          trimEnd: trimEnd,
+          now: DateTime(2026, 6, 15),
+          resLabel: resLabel,
+        );
+
+    test('default template auto-appends the extension', () {
+      expect(
+        render('{prefix}{filename}{suffix}',
+            inputPath: 'C:/vids/clip.mp4', prefix: 'p_', suffix: '_s'),
+        'p_clip_s.mp4',
+      );
+    });
+
+    test('LosslessCut template formats cut times as HH.MM.SS.mmm', () {
+      expect(
+        render('{filename}-{cut_from}-{cut_to}{seg_suffix}{ext}',
+            trimStart: const Duration(milliseconds: 6881),
+            trimEnd: const Duration(milliseconds: 82640)),
+        'clip-00.00.06.881-00.01.22.640.mp4',
+      );
+    });
+
+    test('tokens are case-insensitive', () {
+      expect(render('{FILENAME}{EXT}', inputPath: 'clip.mkv'), 'clip.mp4');
+    });
+
+    test('explicit {ext} is not double-appended', () {
+      final name = render('{filename}{ext}');
+      expect(name, 'clip.mp4');
+      expect('.mp4'.allMatches(name).length, 1);
+    });
+
+    test('illegal characters are sanitized', () {
+      expect(render(r'a:b<c>d|e{filename}'), 'a_b_c_d_eclip.mp4');
+    });
+
+    test('{res} expands to the resolution label', () {
+      expect(render('{filename}_{res}', resLabel: '720p'), 'clip_720p.mp4');
+    });
+
+    test('{date} expands to YYYY-MM-DD', () {
+      expect(render('{filename}_{date}'), 'clip_2026-06-15.mp4');
+    });
+
+    test('unknown tokens are left literal', () {
+      expect(render('{filename}{unknown}'), 'clip{unknown}.mp4');
+    });
+  });
+
+  group('output collision', () {
+    test('returns the path unchanged when nothing exists', () {
+      expect(
+        svc.resolveOutputCollision('C:/out/clip.mp4', (_) => false),
+        'C:/out/clip.mp4',
+      );
+    });
+
+    test('appends an incrementing (n) suffix on collision', () {
+      final taken = {'C:/out/clip.mp4', 'C:/out/clip (1).mp4'};
+      expect(
+        svc.resolveOutputCollision('C:/out/clip.mp4', taken.contains),
+        'C:/out/clip (2).mp4',
+      );
+    });
+  });
+
   group('audio handling for single-pass jobs', () {
     test('buildSinglePassArgs honors a Copy audio choice', () {
       final settings = EncodeSettings(

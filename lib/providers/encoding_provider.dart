@@ -29,6 +29,7 @@ class EncodingProvider extends ChangeNotifier {
     required SettingsProvider settingsConfig,
     required Duration trimStart,
     required Duration trimEnd,
+    required String filenameTemplate,
   }) async {
     if (isEncoding) return;
 
@@ -38,13 +39,25 @@ class EncodingProvider extends ChangeNotifier {
         : fileInfo.durationSeconds;
 
     final ffmpegSvc = FfmpegService(ffmpegPath: settingsConfig.effectiveFfmpegPath);
-    final outputPath = ffmpegSvc.buildOutputPath(
+    // {templatedefault} (encode-tab override) inherits the Settings template.
+    final resolvedTemplate = filenameTemplate.replaceAll(
+        RegExp(r'\{templatedefault\}', caseSensitive: false),
+        settingsConfig.filenameTemplate);
+    var outputPath = ffmpegSvc.buildOutputPath(
       inputPath: fileInfo.path,
       outputDir: settingsConfig.outputDir,
       prefix: settingsConfig.outputPrefix,
       suffix: settingsConfig.outputSuffix,
+      template: resolvedTemplate,
       settings: settings,
+      trimStart: trimStart,
+      trimEnd: trimEnd,
+      now: DateTime.now(),
+      resLabel: _resLabel(settings, fileInfo),
     );
+    // Never silently overwrite an earlier export of the same clip.
+    outputPath =
+        ffmpegSvc.resolveOutputCollision(outputPath, (p) => File(p).existsSync());
 
     final now = DateTime.now();
     _currentJob = EncodeJob(
@@ -90,6 +103,19 @@ class EncodingProvider extends ChangeNotifier {
         AppLogger.warn('Encoding', 'Aborted: $outputPath');
       }
     }
+  }
+
+  // Height label for the {res} token, e.g. "1080p". Uses the chosen scale when
+  // one is set, otherwise derives from the source resolution ("WxH").
+  String _resLabel(EncodeSettings settings, FileInfo fileInfo) {
+    final maxH = settings.resolutionScale.maxHeight;
+    if (maxH != null) return '${maxH}p';
+    final parts = fileInfo.resolution.split(RegExp(r'[x×]'));
+    if (parts.length == 2) {
+      final h = int.tryParse(parts[1].trim());
+      if (h != null) return '${h}p';
+    }
+    return '';
   }
 
   Future<void> _runSinglePass(

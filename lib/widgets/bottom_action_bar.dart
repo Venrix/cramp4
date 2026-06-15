@@ -64,6 +64,7 @@ class BottomActionBar extends StatelessWidget {
                       settingsConfig: settings,
                       trimStart: appState.trimStart,
                       trimEnd: appState.trimEnd,
+                      filenameTemplate: appState.filenameTemplateOverride,
                     );
                   }
                 : null,

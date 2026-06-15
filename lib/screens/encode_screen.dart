@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/app_state_provider.dart';
+import '../theme/app_theme.dart';
 import '../widgets/audio_settings_card.dart';
+import '../widgets/filename_template_field.dart';
 import '../widgets/process_queue_card.dart';
 import '../widgets/video_settings_card.dart';
 
@@ -12,8 +16,9 @@ class EncodeScreen extends StatefulWidget {
 }
 
 class _EncodeScreenState extends State<EncodeScreen> {
-  // Settings shrink-wrap to content, capped here.
-  static const double _maxSettingsHeight = 360;
+  // Settings shrink-wrap to content, capped here. Tall enough for the output
+  // filename card plus the video/audio cards below it.
+  static const double _maxSettingsHeight = 480;
   // Queue floor; below this the page scrolls instead.
   static const double _minQueueHeight = 220;
 
@@ -54,28 +59,87 @@ class _EncodeScreenState extends State<EncodeScreen> {
   }
 }
 
-class _SettingsPanels extends StatelessWidget {
+class _SettingsPanels extends StatefulWidget {
   // Cap the shrink-wrapped settings; content taller than this scrolls inside.
   final double maxHeight;
 
   const _SettingsPanels({super.key, required this.maxHeight});
 
   @override
+  State<_SettingsPanels> createState() => _SettingsPanelsState();
+}
+
+class _SettingsPanelsState extends State<_SettingsPanels> {
+  late final TextEditingController _templateController;
+
+  @override
+  void initState() {
+    super.initState();
+    _templateController = TextEditingController(
+        text: context.read<AppStateProvider>().filenameTemplateOverride);
+  }
+
+  @override
+  void dispose() {
+    _templateController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+      constraints: BoxConstraints(maxHeight: widget.maxHeight),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-        // Both cards match the taller one's height.
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: const [
-              Expanded(child: VideoSettingsCard()),
-              SizedBox(width: 12),
-              Expanded(child: AudioSettingsCard()),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.drive_file_rename_outline,
+                            size: 22, color: AppTheme.accent),
+                        SizedBox(width: 8),
+                        Text(
+                          'Output Filename',
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    FilenameTemplateField(
+                      controller: _templateController,
+                      presets: kEncodeTemplatePresets,
+                      onChanged: context
+                          .read<AppStateProvider>()
+                          .setFilenameTemplateOverride,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Both cards match the taller one's height.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: const [
+                  Expanded(child: VideoSettingsCard()),
+                  SizedBox(width: 12),
+                  Expanded(child: AudioSettingsCard()),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

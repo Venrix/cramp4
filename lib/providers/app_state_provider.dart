@@ -34,6 +34,9 @@ class AppStateProvider extends ChangeNotifier {
   String? _fileError;
   Duration _trimStart = Duration.zero;
   Duration _trimEnd = Duration.zero;
+  // Per-session override of the filename template. {templatedefault} inherits
+  // the Settings template. Not persisted; survives file switches in a session.
+  String _filenameTemplateOverride = '{templatedefault}';
   List<String> _folderFiles = [];
   int _folderIndex = -1;
   String? _folderPath;
@@ -45,6 +48,7 @@ class AppStateProvider extends ChangeNotifier {
   String? get fileError => _fileError;
   Duration get trimStart => _trimStart;
   Duration get trimEnd => _trimEnd;
+  String get filenameTemplateOverride => _filenameTemplateOverride;
   bool get hasFolderLoaded => _folderFiles.isNotEmpty;
   int get folderIndex => _folderIndex;
   int get folderTotal => _folderFiles.length;
@@ -266,6 +270,11 @@ class AppStateProvider extends ChangeNotifier {
   void setTrimEnd(Duration d) {
     _trimEnd = d;
     notifyListeners();
+  }
+
+  // No notify: nothing visual depends on it; read fresh when encoding starts.
+  void setFilenameTemplateOverride(String template) {
+    _filenameTemplateOverride = template;
   }
 
   void setVideoEnabled(bool v) {

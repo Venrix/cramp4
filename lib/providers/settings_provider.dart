@@ -13,6 +13,8 @@ class SettingsProvider extends ChangeNotifier {
   static const _keyOutputDir = 'output_dir';
   static const _keyOutputPrefix = 'output_prefix';
   static const _keyOutputSuffix = 'output_suffix';
+  static const _keyFilenameTemplate = 'output_filename_template';
+  static const defaultFilenameTemplate = '{prefix}{filename}{suffix}';
   static const _keyFolderSortField = 'folder_sort_field';
   static const _keyFolderSortDirection = 'folder_sort_direction';
   static const _keyBlacklistPattern = 'folder_blacklist_pattern';
@@ -27,6 +29,7 @@ class SettingsProvider extends ChangeNotifier {
   String _outputDir = '';
   String _outputPrefix = '';
   String _outputSuffix = '_cramp4';
+  String _filenameTemplate = defaultFilenameTemplate;
   bool _contextMenuRegistered = false;
   FolderSortField _folderSortField = FolderSortField.dateCreated;
   FolderSortDirection _folderSortDirection = FolderSortDirection.ascending;
@@ -40,6 +43,7 @@ class SettingsProvider extends ChangeNotifier {
   String get outputDir => _outputDir;
   String get outputPrefix => _outputPrefix;
   String get outputSuffix => _outputSuffix;
+  String get filenameTemplate => _filenameTemplate;
   bool get contextMenuRegistered => _contextMenuRegistered;
   FolderSortField get folderSortField => _folderSortField;
   FolderSortDirection get folderSortDirection => _folderSortDirection;
@@ -67,6 +71,8 @@ class SettingsProvider extends ChangeNotifier {
     _outputDir = prefs.getString(_keyOutputDir) ?? '';
     _outputPrefix = prefs.getString(_keyOutputPrefix) ?? '';
     _outputSuffix = prefs.getString(_keyOutputSuffix) ?? '_cramp4';
+    _filenameTemplate =
+        prefs.getString(_keyFilenameTemplate) ?? defaultFilenameTemplate;
     _folderSortField = FolderSortField.values.byName(
         prefs.getString(_keyFolderSortField) ?? FolderSortField.dateCreated.name);
     _folderSortDirection = FolderSortDirection.values.byName(
@@ -156,6 +162,13 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setString(_keyOutputSuffix, suffix);
   }
 
+  Future<void> setFilenameTemplate(String template) async {
+    _filenameTemplate = template;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyFilenameTemplate, template);
+  }
+
   Future<void> setFolderSortField(FolderSortField v) async {
     _folderSortField = v;
     notifyListeners();
@@ -181,11 +194,13 @@ class SettingsProvider extends ChangeNotifier {
     _outputDir = '';
     _outputPrefix = '';
     _outputSuffix = '_cramp4';
+    _filenameTemplate = defaultFilenameTemplate;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyOutputDir);
     await prefs.remove(_keyOutputPrefix);
     await prefs.setString(_keyOutputSuffix, '_cramp4');
+    await prefs.remove(_keyFilenameTemplate);
   }
 
   Future<void> resetEncodingDefaults() async {
