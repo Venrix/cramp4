@@ -1,0 +1,20 @@
+# Normalize to LF in the repository, check out native line endings.
+# Without this the working tree reads as fully modified from clients whose
+# core.autocrlf differs (e.g. WSL git vs Git for Windows).
+* text=auto
+
+# Windows-only scripts must keep CRLF in the working tree.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Shell scripts must keep LF even when checked out on Windows.
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary
+*.dll binary
+*.ttf binary
+*.otf binary
